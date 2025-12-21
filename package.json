@@ -1,0 +1,38 @@
+{
+  "name": "hrm-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.8.8",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@microsoft/signalr": "^8.0.0",
+    "@mui/icons-material": "^5.15.1",
+    "@mui/material": "^5.15.1",
+    "@mui/x-data-grid": "^6.18.4",
+    "@mui/x-date-pickers": "^6.18.4",
+    "@reduxjs/toolkit": "^2.0.1",
+    "dayjs": "^1.11.10",
+    "graphql": "^16.8.1",
+    "keycloak-js": "^23.0.3",
+    "next": "14.0.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-organizational-chart": "^2.2.1",
+    "react-redux": "^9.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "typescript": "^5"
+  }
+}

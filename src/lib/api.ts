@@ -1,4 +1,4 @@
-import { getToken } from "./keycloak";
+import { getAccessToken } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -12,7 +12,7 @@ async function fetchApi<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const token = getToken();
+  const token = getAccessToken();
 
   const config: RequestInit = {
     method: options.method || "GET",
@@ -241,4 +241,85 @@ export const departmentApi = {
     fetchApi<any[]>(`/api/employees/departments/${departmentId}/teams`),
 
   getAllTeams: () => fetchApi<any[]>("/api/employees/teams"),
+};
+
+// Team API
+export const teamApi = {
+  getAll: (departmentId?: string) => {
+    const query = departmentId ? `?departmentId=${departmentId}` : "";
+    return fetchApi<any[]>(`/api/employees/teams${query}`);
+  },
+
+  getById: (id: string) => fetchApi<any>(`/api/employees/teams/${id}`),
+
+  getMembers: (id: string) => fetchApi<any[]>(`/api/employees/team/${id}`),
+
+  create: (data: any) =>
+    fetchApi<any>("/api/employees/teams", { method: "POST", body: data }),
+
+  update: (id: string, data: any) =>
+    fetchApi<any>(`/api/employees/teams/${id}`, { method: "PUT", body: data }),
+
+  delete: (id: string) =>
+    fetchApi<any>(`/api/employees/teams/${id}`, { method: "DELETE" }),
+};
+
+// Overtime API
+export const overtimeApi = {
+  createRequest: (data: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    totalMinutes: number;
+    reason?: string;
+  }) =>
+    fetchApi<any>("/api/overtime/request", { method: "POST", body: data }),
+
+  getRequests: (params?: {
+    employeeId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.employeeId) query.append("employeeId", params.employeeId);
+    if (params?.status) query.append("status", params.status);
+    if (params?.startDate) query.append("startDate", params.startDate);
+    if (params?.endDate) query.append("endDate", params.endDate);
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.pageSize) query.append("pageSize", params.pageSize.toString());
+    return fetchApi<any>(`/api/overtime/requests?${query.toString()}`);
+  },
+
+  getPendingRequests: (params?: { page?: number; pageSize?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.pageSize) query.append("pageSize", params.pageSize.toString());
+    return fetchApi<any>(`/api/overtime/requests/pending?${query.toString()}`);
+  },
+
+  getRequestById: (id: string) => fetchApi<any>(`/api/overtime/request/${id}`),
+
+  approve: (id: string, comment?: string) =>
+    fetchApi<any>(`/api/overtime/request/${id}/approve`, {
+      method: "POST",
+      body: { comment },
+    }),
+
+  reject: (id: string, reason: string) =>
+    fetchApi<any>(`/api/overtime/request/${id}/reject`, {
+      method: "POST",
+      body: { reason },
+    }),
+};
+
+// Team Attendance API
+export const teamAttendanceApi = {
+  getTeamAttendance: (teamId: string, date?: string) => {
+    const query = new URLSearchParams();
+    if (date) query.append("date", date);
+    return fetchApi<any>(`/api/attendance/team/${teamId}?${query.toString()}`);
+  },
 };

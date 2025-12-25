@@ -2,12 +2,7 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { useDispatch } from "react-redux";
-import {
-  initKeycloak,
-  getUserInfo,
-  getToken,
-  isAuthenticated,
-} from "@/lib/keycloak";
+import { checkAuthStatus, refreshAccessToken, getAccessToken } from "@/lib/auth";
 import {
   setAuthenticated,
   setUnauthenticated,
@@ -26,27 +21,31 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const init = async () => {
       try {
-        const authenticated = await initKeycloak();
+        const authData = await checkAuthStatus();
 
-        if (authenticated) {
-          const user = getUserInfo();
-          const token = getToken();
+        if (authData) {
+          dispatch(
+            setAuthenticated({
+              user: authData.user,
+              token: authData.token,
+            })
+          );
 
-          if (user && token) {
-            dispatch(
-              setAuthenticated({
-                user: {
-                  id: user.id || "",
-                  username: user.username || "",
-                  email: user.email || "",
-                  firstName: user.firstName || "",
-                  lastName: user.lastName || "",
-                  roles: user.roles || [],
-                },
-                token,
-              })
-            );
-          }
+          // Setup token refresh interval
+          const refreshInterval = setInterval(async () => {
+            const newToken = await refreshAccessToken();
+            if (newToken) {
+              dispatch(
+                setAuthenticated({
+                  user: authData.user,
+                  token: newToken,
+                })
+              );
+            }
+          }, 4 * 60 * 1000); // Refresh every 4 minutes
+
+          // Cleanup on unmount
+          return () => clearInterval(refreshInterval);
         } else {
           dispatch(setUnauthenticated());
         }

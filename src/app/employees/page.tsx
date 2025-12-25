@@ -40,9 +40,11 @@ import {
   Edit as EditIcon,
   Search as SearchIcon,
   Person as PersonIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { employeeApi, departmentApi } from "@/lib/api";
+import { exportEmployeesToCSV } from "@/lib/export";
 import dayjs from "dayjs";
 
 interface TabPanelProps {
@@ -245,15 +247,31 @@ export default function EmployeesPage() {
         }}
       >
         <Typography variant="h4">Employees</Typography>
-        {isHrOrAdmin && (
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              if (filteredEmployees.length > 0) {
+                exportEmployeesToCSV(filteredEmployees);
+              } else {
+                alert("No employees to export");
+              }
+            }}
+            disabled={!filteredEmployees.length}
           >
-            Add Employee
+            Export CSV
           </Button>
-        )}
+          {isHrOrAdmin && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+            >
+              Add Employee
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Stats Cards */}

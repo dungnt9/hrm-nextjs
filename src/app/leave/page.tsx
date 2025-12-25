@@ -30,9 +30,10 @@ import {
   Alert,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { Add as AddIcon } from "@mui/icons-material";
+import { Add as AddIcon, Download as DownloadIcon } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { leaveApi, employeeApi } from "@/lib/api";
+import { exportLeaveRequestsToCSV } from "@/lib/export";
 import dayjs, { Dayjs } from "dayjs";
 
 export default function LeavePage() {
@@ -151,13 +152,29 @@ export default function LeavePage() {
         }}
       >
         <Typography variant="h4">Leave Requests</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogOpen(true)}
-        >
-          New Request
-        </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              if (leaveRequests?.data && leaveRequests.data.length > 0) {
+                exportLeaveRequestsToCSV(leaveRequests.data);
+              } else {
+                alert("No leave requests to export");
+              }
+            }}
+            disabled={!leaveRequests?.data?.length}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setDialogOpen(true)}
+          >
+            New Request
+          </Button>
+        </Box>
       </Box>
 
       {/* Leave Balance */}

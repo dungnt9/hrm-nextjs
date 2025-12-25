@@ -20,7 +20,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { Download as DownloadIcon } from "@mui/icons-material";
 import { attendanceApi } from "@/lib/api";
+import { exportAttendanceToCSV } from "@/lib/export";
 import dayjs, { Dayjs } from "dayjs";
 
 export default function AttendancePage() {
@@ -80,11 +82,34 @@ export default function AttendancePage() {
     return dayjs(isoString).format("HH:mm");
   };
 
+  const handleExport = () => {
+    if (history?.data && history.data.length > 0) {
+      exportAttendanceToCSV(history.data);
+    } else {
+      alert("No attendance records to export");
+    }
+  };
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Attendance History
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography variant="h4">Attendance History</Typography>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={handleExport}
+          disabled={!history?.data?.length}
+        >
+          Export CSV
+        </Button>
+      </Box>
 
       {/* Summary Card */}
       {history?.summary && (

@@ -33,9 +33,14 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  Group as GroupIcon,
+  Schedule as ScheduleIcon,
+  AssignmentTurnedIn as AttendanceCheckIcon,
+  BarChart as BarChartIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
-import { logout } from "@/lib/keycloak";
+import { logout } from "@/lib/auth";
+import { setUnauthenticated } from "@/store/slices/authSlice";
 
 const drawerWidth = 240;
 
@@ -69,6 +74,24 @@ const menuItems = [
     roles: ["hr_staff", "manager", "system_admin"],
   },
   {
+    text: "Teams",
+    icon: <GroupIcon />,
+    path: "/teams",
+    roles: ["hr_staff", "manager", "system_admin"],
+  },
+  {
+    text: "Team Attendance",
+    icon: <AttendanceCheckIcon />,
+    path: "/team-attendance",
+    roles: ["manager", "hr_staff", "system_admin"],
+  },
+  {
+    text: "Shifts",
+    icon: <ScheduleIcon />,
+    path: "/shifts",
+    roles: ["employee"],
+  },
+  {
     text: "Organization",
     icon: <AccountTreeIcon />,
     path: "/organization",
@@ -79,6 +102,12 @@ const menuItems = [
     icon: <EventNoteIcon />,
     path: "/approvals",
     roles: ["manager", "hr_staff"],
+  },
+  {
+    text: "Reports",
+    icon: <BarChartIcon />,
+    path: "/reports",
+    roles: ["manager", "hr_staff", "system_admin"],
   },
   {
     text: "Settings",
@@ -122,9 +151,11 @@ export default function Layout({ children }: LayoutProps) {
     setNotificationAnchor(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    logout();
+    await logout();
+    dispatch(setUnauthenticated());
+    router.push("/");
   };
 
   const hasAccess = (roles: string[]) => {

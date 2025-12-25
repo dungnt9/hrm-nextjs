@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import { getToken } from "./keycloak";
+import { getAccessToken } from "./auth";
 
 let connection: signalR.HubConnection | null = null;
 
@@ -8,15 +8,27 @@ export const createSignalRConnection = () => {
     return connection;
   }
 
-  const hubUrl =
+  // Try to use NotificationHub through API Gateway, fallback to direct URL
+  let hubUrl =
     process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL ||
-    "http://localhost:5005/hubs/notification";
+    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/hubs/notification`;
+
+  // Legacy support for direct notification service URL
+  if (process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL?.includes("5005")) {
+    hubUrl = process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL;
+  }
 
   connection = new signalR.HubConnectionBuilder()
     .withUrl(hubUrl, {
-      accessTokenFactory: () => getToken() || "",
+      accessTokenFactory: () => getAccessToken() || "",
     })
-    .withAutomaticReconnect()
+    .withAutomaticReconnect({
+      nextRetryDelayInMilliseconds: (context) => {
+        if (context.previousRetryCount === 0) return 1000; // Retry after 1s
+        if (context.previousRetryCount === 1) return 3000; // Retry after 3s
+        return 5000; // Then retry after 5s
+      },
+    })
     .configureLogging(signalR.LogLevel.Information)
     .build();
 

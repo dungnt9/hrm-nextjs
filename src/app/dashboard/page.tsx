@@ -11,6 +11,7 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   AccessTime as AccessTimeIcon,
@@ -27,13 +28,22 @@ import {
 import { attendanceApi, leaveApi } from "@/lib/api";
 import dayjs from "dayjs";
 
+interface LeaveBalance {
+  annual: { total: number; used: number; remaining: number };
+  sick: { total: number; used: number; remaining: number };
+  unpaidUsed: number;
+}
+
 export default function DashboardPage() {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { status, isLoading } = useSelector(
     (state: RootState) => state.attendance
   );
-  const [leaveBalance, setLeaveBalance] = useState<any>(null);
+  const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null);
+  const [leaveLoading, setLeaveLoading] = useState(true);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
 
   useEffect(() => {
@@ -44,18 +54,29 @@ export default function DashboardPage() {
   const fetchAttendanceStatus = async () => {
     try {
       dispatch(setLoading(true));
+      setAttendanceError(null);
       const data = await attendanceApi.getStatus();
       dispatch(
         setAttendanceStatus({
-          isCheckedIn: data.isCheckedIn,
-          isCheckedOut: data.isCheckedOut,
-          checkInTime: data.checkInTime,
-          checkOutTime: data.checkOutTime,
-          currentHours: data.currentHours || 0,
+          isCheckedIn: data.isCheckedIn ?? false,
+          isCheckedOut: data.isCheckedOut ?? false,
+          checkInTime: data.checkInTime ?? null,
+          checkOutTime: data.checkOutTime ?? null,
+          currentHours: data.currentHours ?? 0,
         })
       );
     } catch (error) {
       console.error("Failed to fetch attendance status:", error);
+      setAttendanceError("Failed to load attendance status");
+      dispatch(
+        setAttendanceStatus({
+          isCheckedIn: false,
+          isCheckedOut: false,
+          checkInTime: null,
+          checkOutTime: null,
+          currentHours: 0,
+        })
+      );
     } finally {
       dispatch(setLoading(false));
     }
@@ -63,10 +84,21 @@ export default function DashboardPage() {
 
   const fetchLeaveBalance = async () => {
     try {
+      setLeaveLoading(true);
+      setLeaveError(null);
       const data = await leaveApi.getBalance();
       setLeaveBalance(data);
     } catch (error) {
       console.error("Failed to fetch leave balance:", error);
+      setLeaveError("Failed to load leave balance");
+      // Set default values when API fails
+      setLeaveBalance({
+        annual: { total: 12, used: 0, remaining: 12 },
+        sick: { total: 7, used: 0, remaining: 7 },
+        unpaidUsed: 0,
+      });
+    } finally {
+      setLeaveLoading(false);
     }
   };
 
@@ -77,6 +109,7 @@ export default function DashboardPage() {
       dispatch(checkIn(data.checkInTime));
     } catch (error) {
       console.error("Check-in failed:", error);
+      alert("Check-in failed. Please try again.");
     } finally {
       setCheckInLoading(false);
     }
@@ -94,6 +127,7 @@ export default function DashboardPage() {
       );
     } catch (error) {
       console.error("Check-out failed:", error);
+      alert("Check-out failed. Please try again.");
     } finally {
       setCheckInLoading(false);
     }
@@ -122,6 +156,12 @@ export default function DashboardPage() {
                 <AccessTimeIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h6">Today's Attendance</Typography>
               </Box>
+
+              {attendanceError && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {attendanceError}
+                </Alert>
+              )}
 
               {isLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
@@ -212,7 +252,17 @@ export default function DashboardPage() {
                 <Typography variant="h6">Leave Balance</Typography>
               </Box>
 
-              {leaveBalance ? (
+              {leaveError && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {leaveError}
+                </Alert>
+              )}
+
+              {leaveLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : leaveBalance ? (
                 <Box>
                   <Box
                     sx={{
@@ -250,9 +300,7 @@ export default function DashboardPage() {
                   </Box>
                 </Box>
               ) : (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                  <CircularProgress size={24} />
-                </Box>
+                <Typography color="text.secondary">No data available</Typography>
               )}
             </CardContent>
           </Card>

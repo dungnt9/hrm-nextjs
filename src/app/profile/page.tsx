@@ -30,7 +30,7 @@ import {
   Notifications as NotificationsIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
-import { employeeApi } from "@/lib/api";
+import { authApi, employeeApi, notificationApi } from "@/lib/api";
 import { setAuthenticated } from "@/store/slices/authSlice";
 import dayjs from "dayjs";
 
@@ -48,6 +48,8 @@ export default function ProfilePage() {
     smsNotifications: false,
     pushNotifications: true,
   });
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [notificationSuccess, setNotificationSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -68,8 +70,25 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user?.id) {
       fetchProfile();
+      fetchNotificationSettings();
     }
   }, [user?.id]);
+
+  const fetchNotificationSettings = async () => {
+    try {
+      const settings = await notificationApi.getSettings();
+      if (settings) {
+        setNotificationSettings({
+          emailNotifications: settings.emailNotifications ?? true,
+          smsNotifications: settings.smsNotifications ?? false,
+          pushNotifications: settings.pushNotifications ?? true,
+        });
+      }
+    } catch (err) {
+      // Use default settings if API fails
+      console.log("Using default notification settings");
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -157,9 +176,10 @@ export default function ProfilePage() {
     try {
       setSubmitting(true);
       setError(null);
-      // In a real app, call an API to change password
-      // For now, just show success
-      alert("Password changed successfully!");
+      await authApi.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
       setPasswordDialogOpen(false);
       setPasswordData({
         currentPassword: "",
@@ -173,12 +193,26 @@ export default function ProfilePage() {
     }
   };
 
-  const handleNotificationSettingsChange = (key: string) => {
-    setNotificationSettings({
+  const handleNotificationSettingsChange = async (key: string) => {
+    const newSettings = {
       ...notificationSettings,
       [key]: !notificationSettings[key as keyof typeof notificationSettings],
-    });
-    // In a real app, save these settings to the server
+    };
+    setNotificationSettings(newSettings);
+
+    try {
+      setSavingNotifications(true);
+      setNotificationSuccess(false);
+      await notificationApi.updateSettings(newSettings);
+      setNotificationSuccess(true);
+      setTimeout(() => setNotificationSuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to save notification settings:", err);
+      // Revert on error
+      setNotificationSettings(notificationSettings);
+    } finally {
+      setSavingNotifications(false);
+    }
   };
 
   if (loading) {
@@ -459,9 +493,26 @@ export default function ProfilePage() {
           {/* Notifications Card */}
           <Card>
             <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <NotificationsIcon sx={{ mr: 1, color: "primary.main" }} />
-                <Typography variant="h6">Notifications</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <NotificationsIcon sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography variant="h6">Notifications</Typography>
+                </Box>
+                {savingNotifications && (
+                  <CircularProgress size={20} />
+                )}
+                {notificationSuccess && (
+                  <Typography variant="caption" color="success.main">
+                    Saved!
+                  </Typography>
+                )}
               </Box>
               <Divider sx={{ mb: 2 }} />
               <Box>
@@ -472,6 +523,7 @@ export default function ProfilePage() {
                       onChange={() =>
                         handleNotificationSettingsChange("emailNotifications")
                       }
+                      disabled={savingNotifications}
                     />
                   }
                   label="Email Notifications"
@@ -483,6 +535,7 @@ export default function ProfilePage() {
                       onChange={() =>
                         handleNotificationSettingsChange("smsNotifications")
                       }
+                      disabled={savingNotifications}
                     />
                   }
                   label="SMS Notifications"
@@ -494,6 +547,7 @@ export default function ProfilePage() {
                       onChange={() =>
                         handleNotificationSettingsChange("pushNotifications")
                       }
+                      disabled={savingNotifications}
                     />
                   }
                   label="Push Notifications"

@@ -275,6 +275,8 @@ export default function OrganizationPage() {
     errorPolicy: "all",
   });
 
+  const isUsingDemoData = !data?.orgChart;
+
   const orgData = useMemo(() => {
     if (data?.orgChart) {
       return data.orgChart;
@@ -304,9 +306,10 @@ export default function OrganizationPage() {
         Organization Chart
       </Typography>
 
-      {error && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          Unable to load live data. Showing demo organization chart.
+      {isUsingDemoData && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <strong>Demo Mode:</strong> GraphQL endpoint is not available. Displaying sample organization structure for demonstration purposes.
+          {error && <Typography variant="caption" display="block">Error: {error.message}</Typography>}
         </Alert>
       )}
 

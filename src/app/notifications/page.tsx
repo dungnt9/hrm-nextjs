@@ -146,8 +146,17 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await notificationApi.delete(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      const deletedNotif = notifications.find((n) => n.id === id);
+      if (deletedNotif && !deletedNotif.read) {
+        setUnreadCount(Math.max(0, unreadCount - 1));
+      }
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
   };
 
   const getNotificationIcon = (type: string) => {

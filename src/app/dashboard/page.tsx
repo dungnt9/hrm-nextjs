@@ -25,7 +25,7 @@ import {
   checkIn,
   checkOut,
 } from "@/store/slices/attendanceSlice";
-import { attendanceApi, leaveApi } from "@/lib/api";
+import { attendanceApi, leaveApi, overtimeApi } from "@/lib/api";
 import dayjs from "dayjs";
 
 interface LeaveBalance {
@@ -45,10 +45,19 @@ export default function DashboardPage() {
   const [leaveError, setLeaveError] = useState<string | null>(null);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [monthlyStats, setMonthlyStats] = useState({
+    workingDays: 0,
+    lateDays: 0,
+    pendingLeaveRequests: 0,
+    pendingOvertimeRequests: 0,
+    approvedOvertimeHours: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     fetchAttendanceStatus();
     fetchLeaveBalance();
+    fetchMonthlyStats();
   }, []);
 
   const fetchAttendanceStatus = async () => {
@@ -99,6 +108,58 @@ export default function DashboardPage() {
       });
     } finally {
       setLeaveLoading(false);
+    }
+  };
+
+  const fetchMonthlyStats = async () => {
+    try {
+      setStatsLoading(true);
+      const startOfMonth = dayjs().startOf("month").format("YYYY-MM-DD");
+      const endOfMonth = dayjs().endOf("month").format("YYYY-MM-DD");
+
+      const [attendanceData, leaveRequests, overtimeRequests] =
+        await Promise.all([
+          attendanceApi.getHistory({
+            startDate: startOfMonth,
+            endDate: endOfMonth,
+          }),
+          leaveApi.getRequests({ status: "pending" }),
+          overtimeApi.getRequests({
+            startDate: startOfMonth,
+            endDate: endOfMonth,
+          }),
+        ]);
+
+      const records = attendanceData.data || [];
+      const workingDays = records.length;
+      const lateDays = records.filter((r: any) => r.isLate).length;
+
+      const otRequests = overtimeRequests.data || [];
+      const approvedOT = otRequests
+        .filter((r: any) => r.status?.toLowerCase() === "approved")
+        .reduce((sum: number, r: any) => sum + (r.totalMinutes || 0), 0);
+
+      setMonthlyStats({
+        workingDays,
+        lateDays,
+        pendingLeaveRequests: leaveRequests.data?.length || 0,
+        pendingOvertimeRequests: otRequests.filter(
+          (r: any) => r.status?.toLowerCase() === "pending"
+        ).length,
+        approvedOvertimeHours: Math.round(approvedOT / 60),
+      });
+    } catch (error) {
+      console.error("Failed to fetch monthly stats:", error);
+      // Use fallback values
+      setMonthlyStats({
+        workingDays: dayjs().date(),
+        lateDays: 0,
+        pendingLeaveRequests: 0,
+        pendingOvertimeRequests: 0,
+        approvedOvertimeHours: 0,
+      });
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -315,24 +376,89 @@ export default function DashboardPage() {
                 <Typography variant="h6">This Month</Typography>
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "space-around" }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h4" color="primary">
-                    {dayjs().date()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Working Days
-                  </Typography>
+              {statsLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <CircularProgress size={24} />
                 </Box>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h4" color="success.main">
-                    0
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Late Days
-                  </Typography>
+              ) : (
+                <Box sx={{ display: "flex", justifyContent: "space-around" }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h4" color="primary">
+                      {monthlyStats.workingDays}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Working Days
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography
+                      variant="h4"
+                      color={monthlyStats.lateDays > 0 ? "error.main" : "success.main"}
+                    >
+                      {monthlyStats.lateDays}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Late Days
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h4" color="secondary.main">
+                      {monthlyStats.approvedOvertimeHours}h
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Overtime
+                    </Typography>
+                  </Box>
                 </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Pending Requests Card */}
+        <Grid item xs={12} md={6} lg={4}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <EventNoteIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Pending Requests</Typography>
               </Box>
+
+              {statsLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="body2">Leave Requests</Typography>
+                    <Chip
+                      label={monthlyStats.pendingLeaveRequests}
+                      color={monthlyStats.pendingLeaveRequests > 0 ? "warning" : "default"}
+                      size="small"
+                    />
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography variant="body2">Overtime Requests</Typography>
+                    <Chip
+                      label={monthlyStats.pendingOvertimeRequests}
+                      color={monthlyStats.pendingOvertimeRequests > 0 ? "warning" : "default"}
+                      size="small"
+                    />
+                  </Box>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>

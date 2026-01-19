@@ -37,6 +37,7 @@ import {
   Schedule as ScheduleIcon,
   AssignmentTurnedIn as AttendanceCheckIcon,
   BarChart as BarChartIcon,
+  MoreTime as OvertimeIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
@@ -65,6 +66,12 @@ const menuItems = [
     text: "Leave Requests",
     icon: <EventNoteIcon />,
     path: "/leave",
+    roles: ["employee"],
+  },
+  {
+    text: "Overtime",
+    icon: <OvertimeIcon />,
+    path: "/overtime",
     roles: ["employee"],
   },
   {

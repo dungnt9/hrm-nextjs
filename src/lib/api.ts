@@ -39,6 +39,15 @@ async function fetchApi<T>(
   return response.json();
 }
 
+// Auth API
+export const authApi = {
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    fetchApi<{ message: string }>("/api/auth/change-password", {
+      method: "POST",
+      body: data,
+    }),
+};
+
 // Employee API
 export const employeeApi = {
   getAll: (params?: {
@@ -72,13 +81,6 @@ export const employeeApi = {
 
   getTeamMembers: (teamId: string) =>
     fetchApi<any>(`/api/employees/team/${teamId}`),
-
-  getDepartments: () => fetchApi<any>("/api/employees/departments"),
-
-  getTeams: (departmentId?: string) => {
-    const query = departmentId ? `?departmentId=${departmentId}` : "";
-    return fetchApi<any>(`/api/employees/teams${query}`);
-  },
 
   assignRole: (id: string, role: string) =>
     fetchApi<any>(`/api/employees/${id}/assign-role`, {
@@ -164,18 +166,6 @@ export const leaveApi = {
 
   getRequestById: (id: string) => fetchApi<any>(`/api/leave/request/${id}`),
 
-  approve: (id: string, note?: string) =>
-    fetchApi<any>(`/api/leave/request/${id}/approve`, {
-      method: "POST",
-      body: { note },
-    }),
-
-  reject: (id: string, reason: string) =>
-    fetchApi<any>(`/api/leave/request/${id}/reject`, {
-      method: "POST",
-      body: { reason },
-    }),
-
   approveRequest: (id: string, comment?: string) =>
     fetchApi<any>(`/api/leave/request/${id}/approve`, {
       method: "POST",
@@ -229,6 +219,21 @@ export const notificationApi = {
 
   markAllAsRead: () =>
     fetchApi<any>("/api/notifications/read-all", { method: "POST" }),
+
+  delete: (id: string) =>
+    fetchApi<void>(`/api/notifications/${id}`, { method: "DELETE" }),
+
+  getSettings: () => fetchApi<any>("/api/notifications/settings"),
+
+  updateSettings: (settings: {
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    pushNotifications: boolean;
+  }) =>
+    fetchApi<any>("/api/notifications/settings", {
+      method: "PUT",
+      body: settings,
+    }),
 };
 
 // Department API
@@ -239,8 +244,6 @@ export const departmentApi = {
 
   getTeams: (departmentId: string) =>
     fetchApi<any[]>(`/api/employees/departments/${departmentId}/teams`),
-
-  getAllTeams: () => fetchApi<any[]>("/api/employees/teams"),
 };
 
 // Team API

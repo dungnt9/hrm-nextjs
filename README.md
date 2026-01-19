@@ -112,6 +112,7 @@ This is the web frontend for the HRM system, built with Next.js 14, TypeScript, 
 - `/dashboard` - Dashboard with stats and check-in/out
 - `/attendance` - Attendance history and team overview
 - `/leave` - Leave requests and balance
+- `/overtime` - Overtime requests and history
 - `/shifts` - View assigned work shifts
 - `/organization` - Organization chart visualization
 - `/notifications` - Notification center
@@ -232,6 +233,7 @@ app/
 │   ├── employees/
 │   ├── attendance/
 │   ├── leave/
+│   ├── overtime/
 │   ├── approvals/
 │   ├── teams/
 │   ├── team-attendance/

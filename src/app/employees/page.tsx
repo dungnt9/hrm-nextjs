@@ -38,6 +38,7 @@ import {
 import {
   Add as AddIcon,
   Edit as EditIcon,
+  Delete as DeleteIcon,
   Search as SearchIcon,
   Person as PersonIcon,
   Download as DownloadIcon,
@@ -73,8 +74,11 @@ export default function EmployeesPage() {
   const [teams, setTeams] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<any>(null);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
 
@@ -204,6 +208,27 @@ export default function EmployeesPage() {
       setError(err.message || "Failed to save employee");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenDeleteDialog = (employee: any) => {
+    setEmployeeToDelete(employee);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      setDeleting(true);
+      await employeeApi.delete(employeeToDelete.id);
+      setDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+      fetchEmployees();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete employee");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -438,8 +463,16 @@ export default function EmployeesPage() {
                       <IconButton
                         size="small"
                         onClick={() => handleOpenDialog(employee)}
+                        color="primary"
                       >
                         <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenDeleteDialog(employee)}
+                        color="error"
+                      >
+                        <DeleteIcon />
                       </IconButton>
                     </TableCell>
                   )}
@@ -649,6 +682,38 @@ export default function EmployeesPage() {
             ) : (
               "Add Employee"
             )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This action cannot be undone!
+          </Alert>
+          <Typography>
+            Are you sure you want to delete employee{" "}
+            <strong>
+              {employeeToDelete?.firstName} {employeeToDelete?.lastName}
+            </strong>{" "}
+            ({employeeToDelete?.employeeCode})?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? <CircularProgress size={24} /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

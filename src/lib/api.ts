@@ -242,6 +242,23 @@ export const departmentApi = {
 
   getById: (id: string) => fetchApi<any>(`/api/employees/departments/${id}`),
 
+  create: (data: { name: string; description?: string }) =>
+    fetchApi<any>("/api/employees/departments", {
+      method: "POST",
+      body: data,
+    }),
+
+  update: (id: string, data: { name: string; description?: string }) =>
+    fetchApi<any>(`/api/employees/departments/${id}`, {
+      method: "PUT",
+      body: data,
+    }),
+
+  delete: (id: string) =>
+    fetchApi<void>(`/api/employees/departments/${id}`, {
+      method: "DELETE",
+    }),
+
   getTeams: (departmentId: string) =>
     fetchApi<any[]>(`/api/employees/departments/${departmentId}/teams`),
 };

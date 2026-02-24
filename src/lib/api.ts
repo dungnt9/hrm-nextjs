@@ -68,6 +68,11 @@ export const employeeApi = {
     return fetchApi<any>(`/api/employees?${query.toString()}`);
   },
 
+  getMe: () => fetchApi<any>("/api/employees/me"),
+
+  updateMe: (data: any) =>
+    fetchApi<any>("/api/employees/me", { method: "PUT", body: data }),
+
   getById: (id: string) => fetchApi<any>(`/api/employees/${id}`),
 
   create: (data: any) =>

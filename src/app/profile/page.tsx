@@ -94,7 +94,7 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await employeeApi.getById(user?.id || "");
+      const data = await employeeApi.getMe();
       setProfile(data);
       setFormData({
         firstName: data.firstName || "",
@@ -134,7 +134,7 @@ export default function ProfilePage() {
     try {
       setSubmitting(true);
       setError(null);
-      await employeeApi.update(user?.id || "", formData);
+      await employeeApi.updateMe(formData);
 
       // Update Redux state
       dispatch(

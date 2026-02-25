@@ -187,7 +187,7 @@ export const leaveApi = {
     const query = new URLSearchParams();
     if (params?.page) query.append("page", params.page.toString());
     if (params?.pageSize) query.append("pageSize", params.pageSize.toString());
-    return fetchApi<any>(`/api/leave/approvals/pending?${query.toString()}`);
+    return fetchApi<any>(`/api/leave/requests/pending?${query.toString()}`);
   },
 
   getProcessedApprovals: (params?: { page?: number; pageSize?: number }) => {
@@ -265,7 +265,7 @@ export const departmentApi = {
     }),
 
   getTeams: (departmentId: string) =>
-    fetchApi<any[]>(`/api/employees/departments/${departmentId}/teams`),
+    fetchApi<any[]>(`/api/employees/teams?departmentId=${departmentId}`),
 };
 
 // Team API

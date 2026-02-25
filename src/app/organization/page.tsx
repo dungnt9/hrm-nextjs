@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import {
   Box,
   Card,
@@ -13,131 +14,342 @@ import {
   Avatar,
   Paper,
 } from "@mui/material";
+import {
+  Business as BusinessIcon,
+  Groups as GroupsIcon,
+  People as PeopleIcon,
+} from "@mui/icons-material";
 import { useQuery, gql } from "@apollo/client";
 
 // Dynamic import to prevent SSR issues with react-organizational-chart
 const Tree = dynamic(
   () => import("react-organizational-chart").then((mod) => mod.Tree),
-  { ssr: false }
+  { ssr: false, loading: () => <CircularProgress /> }
 );
 const TreeNode = dynamic(
   () => import("react-organizational-chart").then((mod) => mod.TreeNode),
   { ssr: false }
 );
 
+// ─── GraphQL query matching the actual backend schema ────────────────────────
 const ORG_CHART_QUERY = gql`
   query GetOrgChart {
-    orgChart {
+    getOrgChart(depth: 3) {
       id
       name
-      code
-      departments {
+      type
+      parentId
+      children {
         id
         name
-        code
-        managerId
-        teams {
+        type
+        parentId
+        children {
           id
           name
-          leaderId
-          members {
+          type
+          parentId
+          children {
+            id
+            name
+            type
+            parentId
+            employeeData {
+              id
+              firstName
+              lastName
+              position
+              departmentName
+              teamName
+            }
+          }
+          employeeData {
             id
             firstName
             lastName
             position
-            email
-            avatarUrl
+            departmentName
+            teamName
           }
         }
+        employeeData {
+          id
+          firstName
+          lastName
+          position
+          departmentName
+          teamName
+        }
+      }
+      employeeData {
+        id
+        firstName
+        lastName
+        position
+        departmentName
+        teamName
       }
     }
   }
 `;
 
-interface Employee {
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface EmployeeData {
   id: string;
   firstName: string;
   lastName: string;
   position: string;
-  email: string;
-  avatarUrl?: string;
+  departmentName?: string;
+  teamName?: string;
 }
 
-interface Team {
+interface OrgChartNode {
   id: string;
   name: string;
-  leaderId: string;
-  members: Employee[];
+  type: string; // company | department | team | employee
+  parentId: string;
+  children: OrgChartNode[];
+  employeeData?: EmployeeData;
 }
 
-interface Department {
-  id: string;
-  name: string;
-  code: string;
-  managerId: string;
-  teams: Team[];
-}
+// ─── Demo data (shown when GraphQL is unavailable) ────────────────────────────
+const demoData: OrgChartNode = {
+  id: "c1",
+  name: "ABC Corporation",
+  type: "company",
+  parentId: "",
+  children: [
+    {
+      id: "d1",
+      name: "Engineering",
+      type: "department",
+      parentId: "c1",
+      children: [
+        {
+          id: "t1",
+          name: "Frontend Team",
+          type: "team",
+          parentId: "d1",
+          children: [
+            {
+              id: "e1",
+              name: "John Doe",
+              type: "employee",
+              parentId: "t1",
+              children: [],
+              employeeData: {
+                id: "e1",
+                firstName: "John",
+                lastName: "Doe",
+                position: "Team Lead",
+              },
+            },
+            {
+              id: "e2",
+              name: "Jane Smith",
+              type: "employee",
+              parentId: "t1",
+              children: [],
+              employeeData: {
+                id: "e2",
+                firstName: "Jane",
+                lastName: "Smith",
+                position: "Senior Developer",
+              },
+            },
+          ],
+        },
+        {
+          id: "t2",
+          name: "Backend Team",
+          type: "team",
+          parentId: "d1",
+          children: [
+            {
+              id: "e3",
+              name: "Alice Johnson",
+              type: "employee",
+              parentId: "t2",
+              children: [],
+              employeeData: {
+                id: "e3",
+                firstName: "Alice",
+                lastName: "Johnson",
+                position: "Team Lead",
+              },
+            },
+          ],
+        },
+      ],
+      employeeData: undefined,
+    },
+    {
+      id: "d2",
+      name: "Human Resources",
+      type: "department",
+      parentId: "c1",
+      children: [
+        {
+          id: "t3",
+          name: "Recruitment",
+          type: "team",
+          parentId: "d2",
+          children: [
+            {
+              id: "e4",
+              name: "Eva Green",
+              type: "employee",
+              parentId: "t3",
+              children: [],
+              employeeData: {
+                id: "e4",
+                firstName: "Eva",
+                lastName: "Green",
+                position: "Recruiter",
+              },
+            },
+          ],
+        },
+      ],
+      employeeData: undefined,
+    },
+    {
+      id: "d3",
+      name: "Finance",
+      type: "department",
+      parentId: "c1",
+      children: [
+        {
+          id: "t4",
+          name: "Accounting",
+          type: "team",
+          parentId: "d3",
+          children: [
+            {
+              id: "e5",
+              name: "Grace Lee",
+              type: "employee",
+              parentId: "t4",
+              children: [],
+              employeeData: {
+                id: "e5",
+                firstName: "Grace",
+                lastName: "Lee",
+                position: "Accountant",
+              },
+            },
+          ],
+        },
+      ],
+      employeeData: undefined,
+    },
+  ],
+};
 
-interface Company {
-  id: string;
-  name: string;
-  code: string;
-  departments: Department[];
-}
+// ─── Node card component ──────────────────────────────────────────────────────
+const nodeConfig = {
+  company: {
+    color: "primary" as const,
+    bgColor: "#1976d2",
+    minWidth: 200,
+    py: 2,
+    px: 3,
+    avatarSize: 44,
+    titleVariant: "subtitle1" as const,
+  },
+  department: {
+    color: "secondary" as const,
+    bgColor: "#dc004e",
+    minWidth: 160,
+    py: 1.5,
+    px: 2,
+    avatarSize: 36,
+    titleVariant: "body1" as const,
+  },
+  team: {
+    color: "info" as const,
+    bgColor: "#0288d1",
+    minWidth: 140,
+    py: 1.5,
+    px: 2,
+    avatarSize: 32,
+    titleVariant: "body2" as const,
+  },
+  employee: {
+    color: "success" as const,
+    bgColor: "#388e3c",
+    minWidth: 130,
+    py: 1,
+    px: 1.5,
+    avatarSize: 28,
+    titleVariant: "body2" as const,
+  },
+};
 
-interface OrgNodeProps {
-  label: string;
-  subLabel?: string;
-  avatarText?: string;
-  color?: "primary" | "secondary" | "success" | "warning" | "info";
-  size?: "small" | "medium" | "large";
-}
+function OrgNodeCard({ node }: { node: OrgChartNode }) {
+  const cfg = nodeConfig[node.type as keyof typeof nodeConfig] ?? nodeConfig.employee;
 
-const OrgNode = ({
-  label,
-  subLabel,
-  avatarText,
-  color = "primary",
-  size = "medium",
-}: OrgNodeProps) => {
-  const sizeStyles = {
-    small: { minWidth: 120, py: 1, px: 1.5 },
-    medium: { minWidth: 160, py: 1.5, px: 2 },
-    large: { minWidth: 200, py: 2, px: 3 },
-  };
+  const avatarText = (() => {
+    if (node.type === "employee" && node.employeeData) {
+      return `${node.employeeData.firstName?.[0] ?? ""}${node.employeeData.lastName?.[0] ?? ""}`;
+    }
+    return node.name.substring(0, 2).toUpperCase();
+  })();
 
-  return (
+  const subLabel = (() => {
+    if (node.type === "employee" && node.employeeData) {
+      return node.employeeData.position;
+    }
+    if (node.type === "team") {
+      return `${node.children?.length ?? 0} members`;
+    }
+    if (node.type === "department") {
+      const teams = node.children?.length ?? 0;
+      const emps = node.children?.reduce(
+        (s, t) => s + (t.children?.length ?? 0),
+        0
+      ) ?? 0;
+      return `${teams} teams · ${emps} people`;
+    }
+    return undefined;
+  })();
+
+  const card = (
     <Paper
       elevation={2}
       sx={{
         display: "inline-block",
         borderRadius: 2,
         textAlign: "center",
-        ...sizeStyles[size],
+        minWidth: cfg.minWidth,
+        py: cfg.py,
+        px: cfg.px,
         borderTop: 3,
-        borderColor: `${color}.main`,
+        borderColor: `${cfg.color}.main`,
+        cursor: node.type === "employee" ? "pointer" : "default",
+        transition: "box-shadow 0.2s",
+        "&:hover":
+          node.type === "employee"
+            ? { boxShadow: 6 }
+            : {},
       }}
     >
-      {avatarText && (
-        <Avatar
-          sx={{
-            width: size === "small" ? 32 : 40,
-            height: size === "small" ? 32 : 40,
-            bgcolor: `${color}.main`,
-            mx: "auto",
-            mb: 1,
-            fontSize: size === "small" ? 12 : 14,
-          }}
-        >
-          {avatarText}
-        </Avatar>
-      )}
-      <Typography
-        variant={size === "small" ? "body2" : "subtitle1"}
-        fontWeight="bold"
-        noWrap
+      <Avatar
+        sx={{
+          width: cfg.avatarSize,
+          height: cfg.avatarSize,
+          bgcolor: cfg.bgColor,
+          mx: "auto",
+          mb: 0.75,
+          fontSize: cfg.avatarSize * 0.4,
+        }}
       >
-        {label}
+        {avatarText}
+      </Avatar>
+      <Typography variant={cfg.titleVariant} fontWeight="bold" noWrap>
+        {node.type === "employee" && node.employeeData
+          ? `${node.employeeData.firstName} ${node.employeeData.lastName}`
+          : node.name}
       </Typography>
       {subLabel && (
         <Typography
@@ -151,139 +363,59 @@ const OrgNode = ({
       )}
     </Paper>
   );
-};
 
-// Fallback demo data if GraphQL is not available
-const demoOrgData: Company = {
-  id: "1",
-  name: "ABC Corporation",
-  code: "ABC",
-  departments: [
-    {
-      id: "d1",
-      name: "Engineering",
-      code: "ENG",
-      managerId: "e1",
-      teams: [
-        {
-          id: "t1",
-          name: "Frontend Team",
-          leaderId: "e2",
-          members: [
-            {
-              id: "e2",
-              firstName: "John",
-              lastName: "Doe",
-              position: "Team Lead",
-              email: "john@abc.com",
-            },
-            {
-              id: "e3",
-              firstName: "Jane",
-              lastName: "Smith",
-              position: "Senior Developer",
-              email: "jane@abc.com",
-            },
-            {
-              id: "e4",
-              firstName: "Bob",
-              lastName: "Wilson",
-              position: "Developer",
-              email: "bob@abc.com",
-            },
-          ],
-        },
-        {
-          id: "t2",
-          name: "Backend Team",
-          leaderId: "e5",
-          members: [
-            {
-              id: "e5",
-              firstName: "Alice",
-              lastName: "Johnson",
-              position: "Team Lead",
-              email: "alice@abc.com",
-            },
-            {
-              id: "e6",
-              firstName: "Charlie",
-              lastName: "Brown",
-              position: "Developer",
-              email: "charlie@abc.com",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "d2",
-      name: "Human Resources",
-      code: "HR",
-      managerId: "e7",
-      teams: [
-        {
-          id: "t3",
-          name: "Recruitment",
-          leaderId: "e8",
-          members: [
-            {
-              id: "e8",
-              firstName: "Eva",
-              lastName: "Green",
-              position: "Team Lead",
-              email: "eva@abc.com",
-            },
-            {
-              id: "e9",
-              firstName: "Frank",
-              lastName: "Miller",
-              position: "Recruiter",
-              email: "frank@abc.com",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "d3",
-      name: "Finance",
-      code: "FIN",
-      managerId: "e10",
-      teams: [
-        {
-          id: "t4",
-          name: "Accounting",
-          leaderId: "e11",
-          members: [
-            {
-              id: "e11",
-              firstName: "Grace",
-              lastName: "Lee",
-              position: "Team Lead",
-              email: "grace@abc.com",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
+  if (node.type === "employee" && node.employeeData?.id) {
+    return (
+      <Link
+        href={`/employees/${node.employeeData.id}`}
+        style={{ textDecoration: "none" }}
+      >
+        {card}
+      </Link>
+    );
+  }
+  return card;
+}
 
+// ─── Recursive tree renderer ──────────────────────────────────────────────────
+function renderNodes(nodes: OrgChartNode[]): React.ReactNode {
+  return nodes.map((node) => (
+    <TreeNode key={node.id} label={<OrgNodeCard node={node} />}>
+      {node.children?.length > 0 && renderNodes(node.children)}
+    </TreeNode>
+  ));
+}
+
+// ─── Count helpers ────────────────────────────────────────────────────────────
+function countByType(node: OrgChartNode, type: string): number {
+  let count = node.type === type ? 1 : 0;
+  for (const child of node.children ?? []) {
+    count += countByType(child, type);
+  }
+  return count;
+}
+
+function getDepartments(root: OrgChartNode): OrgChartNode[] {
+  return root.children?.filter((n) => n.type === "department") ?? [];
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function OrganizationPage() {
   const { data, loading, error } = useQuery(ORG_CHART_QUERY, {
     errorPolicy: "all",
   });
 
-  const isUsingDemoData = !data?.orgChart;
-
-  const orgData = useMemo(() => {
-    if (data?.orgChart) {
-      return data.orgChart;
-    }
-    // Return demo data if GraphQL fails or returns null
-    return demoOrgData;
+  const orgData: OrgChartNode | null = useMemo(() => {
+    if (data?.getOrgChart) return data.getOrgChart;
+    return null;
   }, [data]);
+
+  const isUsingDemoData = !orgData;
+  const displayData = orgData ?? demoData;
+
+  const totalDepts = countByType(displayData, "department");
+  const totalTeams = countByType(displayData, "team");
+  const totalEmps = countByType(displayData, "employee");
 
   if (loading) {
     return (
@@ -302,147 +434,109 @@ export default function OrganizationPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+      <Typography variant="h4" sx={{ mb: 1 }}>
         Organization Chart
+      </Typography>
+      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+        Company structure — departments, teams, and employees
       </Typography>
 
       {isUsingDemoData && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <strong>Demo Mode:</strong> GraphQL endpoint is not available. Displaying sample organization structure for demonstration purposes.
-          {error && <Typography variant="caption" display="block">Error: {error.message}</Typography>}
+          <strong>Demo Mode:</strong> GraphQL endpoint is unavailable. Showing
+          sample structure.
+          {error && (
+            <Typography variant="caption" display="block">
+              Error: {error.message}
+            </Typography>
+          )}
         </Alert>
       )}
 
-      {/* Stats */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
+      {/* Summary chips */}
+      <Box sx={{ display: "flex", gap: 1.5, mb: 3, flexWrap: "wrap" }}>
         <Chip
-          label={`${orgData.departments?.length || 0} Departments`}
-          color="primary"
-          variant="outlined"
-        />
-        <Chip
-          label={`${
-            orgData.departments?.reduce(
-              (acc: number, d: Department) => acc + (d.teams?.length || 0),
-              0
-            ) || 0
-          } Teams`}
+          icon={<BusinessIcon />}
+          label={`${totalDepts} Departments`}
           color="secondary"
           variant="outlined"
         />
         <Chip
-          label={`${
-            orgData.departments?.reduce(
-              (acc: number, d: Department) =>
-                acc +
-                (d.teams?.reduce(
-                  (tacc: number, t: Team) => tacc + (t.members?.length || 0),
-                  0
-                ) || 0),
-              0
-            ) || 0
-          } Employees`}
+          icon={<GroupsIcon />}
+          label={`${totalTeams} Teams`}
+          color="info"
+          variant="outlined"
+        />
+        <Chip
+          icon={<PeopleIcon />}
+          label={`${totalEmps} Employees`}
           color="success"
           variant="outlined"
         />
       </Box>
 
-      {/* Org Chart */}
-      <Card>
-        <CardContent sx={{ overflow: "auto", py: 4 }}>
+      {/* Org chart tree */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ overflowX: "auto", py: 4 }}>
           <Tree
             lineWidth="2px"
             lineColor="#1976d2"
-            lineBorderRadius="10px"
-            label={
-              <OrgNode
-                label={orgData.name}
-                subLabel={orgData.code}
-                avatarText={orgData.name?.substring(0, 2)}
-                color="primary"
-                size="large"
-              />
-            }
+            lineBorderRadius="8px"
+            label={<OrgNodeCard node={displayData} />}
           >
-            {orgData.departments?.map((dept: Department) => (
-              <TreeNode
-                key={dept.id}
-                label={
-                  <OrgNode
-                    label={dept.name}
-                    subLabel={dept.code}
-                    color="secondary"
-                    size="medium"
-                  />
-                }
-              >
-                {dept.teams?.map((team: Team) => (
-                  <TreeNode
-                    key={team.id}
-                    label={
-                      <OrgNode
-                        label={team.name}
-                        subLabel={`${team.members?.length || 0} members`}
-                        color="info"
-                        size="medium"
-                      />
-                    }
-                  >
-                    {team.members?.map((member: Employee) => (
-                      <TreeNode
-                        key={member.id}
-                        label={
-                          <OrgNode
-                            label={`${member.firstName} ${member.lastName}`}
-                            subLabel={member.position}
-                            avatarText={`${member.firstName?.[0]}${member.lastName?.[0]}`}
-                            color={
-                              member.id === team.leaderId
-                                ? "success"
-                                : "primary"
-                            }
-                            size="small"
-                          />
-                        }
-                      />
-                    ))}
-                  </TreeNode>
-                ))}
-              </TreeNode>
-            ))}
+            {displayData.children?.length > 0 &&
+              renderNodes(displayData.children)}
           </Tree>
         </CardContent>
       </Card>
 
-      {/* Department Details */}
-      <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+      {/* Department cards */}
+      <Typography variant="h5" sx={{ mb: 2 }}>
         Departments Overview
       </Typography>
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-        {orgData.departments?.map((dept: Department) => (
-          <Card key={dept.id} sx={{ minWidth: 280, flex: "1 1 280px" }}>
-            <CardContent>
-              <Typography variant="h6">{dept.name}</Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Code: {dept.code}
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">
-                  Teams ({dept.teams?.length || 0})
+        {getDepartments(displayData).map((dept) => {
+          const teams = dept.children?.filter((n) => n.type === "team") ?? [];
+          const empCount = teams.reduce(
+            (s, t) => s + (t.children?.filter((n) => n.type === "employee").length ?? 0),
+            0
+          );
+
+          return (
+            <Card key={dept.id} sx={{ minWidth: 260, flex: "1 1 260px" }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {dept.name}
                 </Typography>
-                {dept.teams?.map((team: Team) => (
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   <Chip
-                    key={team.id}
-                    label={`${team.name} (${team.members?.length || 0})`}
+                    label={`${teams.length} teams`}
                     size="small"
-                    sx={{ mr: 0.5, mt: 0.5 }}
+                    color="info"
                     variant="outlined"
                   />
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
+                  <Chip
+                    label={`${empCount} people`}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
+                </Box>
+                <Box sx={{ mt: 1.5 }}>
+                  {teams.map((team) => (
+                    <Chip
+                      key={team.id}
+                      label={`${team.name} (${team.children?.filter((n) => n.type === "employee").length ?? 0})`}
+                      size="small"
+                      sx={{ mr: 0.5, mt: 0.5 }}
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          );
+        })}
       </Box>
     </Box>
   );

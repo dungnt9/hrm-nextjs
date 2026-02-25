@@ -30,9 +30,8 @@ interface DecodedToken {
   email: string;
   given_name: string;
   family_name: string;
-  realm_access?: {
-    roles: string[];
-  };
+  realm_access?: { roles: string[] };
+  resource_access?: { [clientId: string]: { roles: string[] } };
   exp: number;
 }
 
@@ -85,6 +84,33 @@ export const isTokenExpired = (token: string): boolean => {
   return decoded.exp < currentTime;
 };
 
+const APP_ROLES = ["employee", "manager", "hr_staff", "system_admin"];
+
+// Extract roles from token — check realm_access first, then resource_access client roles
+function extractRoles(decoded: DecodedToken): string[] {
+  const realmRoles = decoded.realm_access?.roles ?? [];
+
+  // Collect all client roles from resource_access
+  const clientRoles = Object.values(decoded.resource_access ?? {}).flatMap(
+    (c) => c.roles ?? []
+  );
+
+  const seen = new Set<string>();
+  const allRoles = [...realmRoles, ...clientRoles].filter((r) => {
+    if (seen.has(r)) return false;
+    seen.add(r);
+    return true;
+  });
+
+  // If any known app role is present, return them directly
+  if (allRoles.some((r) => APP_ROLES.includes(r))) {
+    return allRoles;
+  }
+
+  // Fallback: if no app role found, assign "employee" as default so menu shows
+  return [...allRoles, "employee"];
+}
+
 // Get user info from token
 export const getUserFromToken = (token: string): User | null => {
   const decoded = decodeJwt<DecodedToken>(token);
@@ -95,7 +121,7 @@ export const getUserFromToken = (token: string): User | null => {
     email: decoded.email || "",
     firstName: decoded.given_name || "",
     lastName: decoded.family_name || "",
-    roles: decoded.realm_access?.roles || [],
+    roles: extractRoles(decoded),
   };
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -27,8 +27,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   AccessTime as AccessTimeIcon,
@@ -49,92 +47,27 @@ import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
 import { setUnauthenticated } from "@/store/slices/authSlice";
 
-const drawerWidthExpanded = 260;
-const drawerWidthCollapsed = 72;
+const DRAWER_EXPANDED = 260;
+const DRAWER_COLLAPSED = 72;
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const menuItems = [
-  {
-    text: "Dashboard",
-    icon: <DashboardIcon />,
-    path: "/dashboard",
-    roles: ["employee"],
-  },
-  {
-    text: "Attendance",
-    icon: <AccessTimeIcon />,
-    path: "/attendance",
-    roles: ["employee"],
-  },
-  {
-    text: "Leave Requests",
-    icon: <EventNoteIcon />,
-    path: "/leave",
-    roles: ["employee"],
-  },
-  {
-    text: "Overtime",
-    icon: <OvertimeIcon />,
-    path: "/overtime",
-    roles: ["employee"],
-  },
-  {
-    text: "Employees",
-    icon: <PeopleIcon />,
-    path: "/employees",
-    roles: ["hr_staff", "manager", "system_admin"],
-  },
-  {
-    text: "Departments",
-    icon: <BusinessIcon />,
-    path: "/departments",
-    roles: ["hr_staff", "manager", "system_admin"],
-  },
-  {
-    text: "Teams",
-    icon: <GroupIcon />,
-    path: "/teams",
-    roles: ["hr_staff", "manager", "system_admin"],
-  },
-  {
-    text: "Team Attendance",
-    icon: <AttendanceCheckIcon />,
-    path: "/team-attendance",
-    roles: ["manager", "hr_staff", "system_admin"],
-  },
-  {
-    text: "Shifts",
-    icon: <ScheduleIcon />,
-    path: "/shifts",
-    roles: ["employee"],
-  },
-  {
-    text: "Organization",
-    icon: <AccountTreeIcon />,
-    path: "/organization",
-    roles: ["employee"],
-  },
-  {
-    text: "Approvals",
-    icon: <EventNoteIcon />,
-    path: "/approvals",
-    roles: ["manager", "hr_staff"],
-  },
-  {
-    text: "Reports",
-    icon: <BarChartIcon />,
-    path: "/reports",
-    roles: ["manager", "hr_staff", "system_admin"],
-  },
-  {
-    text: "Settings",
-    icon: <SettingsIcon />,
-    path: "/settings",
-    roles: ["system_admin"],
-  },
+  { text: "Dashboard",      icon: <DashboardIcon />,      path: "/dashboard" },
+  { text: "Attendance",     icon: <AccessTimeIcon />,     path: "/attendance" },
+  { text: "Leave Requests", icon: <EventNoteIcon />,      path: "/leave" },
+  { text: "Overtime",       icon: <OvertimeIcon />,       path: "/overtime" },
+  { text: "Employees",      icon: <PeopleIcon />,         path: "/employees" },
+  { text: "Departments",    icon: <BusinessIcon />,       path: "/departments" },
+  { text: "Teams",          icon: <GroupIcon />,          path: "/teams" },
+  { text: "Team Attendance",icon: <AttendanceCheckIcon />,path: "/team-attendance" },
+  { text: "Shifts",         icon: <ScheduleIcon />,       path: "/shifts" },
+  { text: "Organization",   icon: <AccountTreeIcon />,    path: "/organization" },
+  { text: "Approvals",      icon: <EventNoteIcon />,      path: "/approvals" },
+  { text: "Reports",        icon: <BarChartIcon />,       path: "/reports" },
+  { text: "Settings",       icon: <SettingsIcon />,       path: "/settings" },
 ];
 
 export default function CollapsibleLayout({ children }: LayoutProps) {
@@ -149,57 +82,22 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
   );
   const { unreadCount } = useSelector((state: RootState) => state.notification);
 
-  // Load collapse state from localStorage
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sidebar-collapsed");
-      return saved === "true";
-    }
-    return false;
-  });
-
+  // Hover state for desktop sidebar
+  const [isHovered, setIsHovered] = useState(false);
+  // Mobile drawer open state
   const [mobileOpen, setMobileOpen] = useState(false);
+  // User account menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
 
-  // Save collapse state to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("sidebar-collapsed", String(isCollapsed));
-    }
-  }, [isCollapsed]);
-
-  // Auto-collapse on mobile
-  useEffect(() => {
-    if (isMobile) {
-      setIsCollapsed(false);
-    }
-  }, [isMobile]);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleCollapseToggle = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
-    setNotificationAnchor(event.currentTarget);
-  };
-
-  const handleNotificationClose = () => {
-    setNotificationAnchor(null);
-  };
+  const handleDrawerToggle = () => setMobileOpen((v) => !v);
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
+    setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleNotificationClick = (e: React.MouseEvent<HTMLElement>) =>
+    setNotificationAnchor(e.currentTarget);
+  const handleNotificationClose = () => setNotificationAnchor(null);
 
   const handleLogout = async () => {
     handleMenuClose();
@@ -210,42 +108,39 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
 
   const hasAccess = (roles: string[]) => {
     if (!user?.roles) return false;
-    return roles.some((role) => user.roles.includes(role));
+    return roles.some((r) => user.roles.includes(r));
   };
 
   const handleNavigation = (path: string) => {
     router.push(path);
-    if (isMobile) {
-      setMobileOpen(false);
-    }
+    if (isMobile) setMobileOpen(false);
   };
 
-  const drawer = (collapsed: boolean = false) => (
+  // ── Drawer content ────────────────────────────────────────────────────────
+  const drawerContent = (collapsed: boolean) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Toolbar
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: collapsed ? "center" : "space-between",
-          px: collapsed ? 1 : 2,
+          justifyContent: collapsed ? "center" : "flex-start",
+          px: collapsed ? 1 : 2.5,
+          minHeight: 64,
         }}
       >
-        {!collapsed && (
-          <Typography variant="h6" noWrap component="div">
+        {collapsed ? (
+          <BusinessIcon color="primary" />
+        ) : (
+          <Typography variant="h6" noWrap fontWeight="bold" color="primary">
             HRM System
           </Typography>
         )}
-        {!isMobile && (
-          <IconButton onClick={handleCollapseToggle} size="small">
-            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
-        )}
       </Toolbar>
+
       <Divider />
-      <List sx={{ flexGrow: 1, py: 1 }}>
-        {menuItems
-          .filter((item) => hasAccess(item.roles))
-          .map((item) => (
+
+      <List sx={{ flexGrow: 1, py: 1, overflowY: "auto", overflowX: "hidden" }}>
+        {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
               <Tooltip
                 title={collapsed ? item.text : ""}
@@ -259,6 +154,19 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
                     minHeight: 48,
                     justifyContent: collapsed ? "center" : "initial",
                     px: collapsed ? 1.5 : 2.5,
+                    borderRadius: 1,
+                    mx: 0.5,
+                    color: "text.primary",
+                    "& .MuiListItemIcon-root": { color: "text.secondary" },
+                    "&.Mui-selected": {
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      "& .MuiListItemIcon-root": {
+                        color: "primary.contrastText",
+                      },
+                      "&:hover": { bgcolor: "primary.dark" },
+                    },
+                    "&:hover": { bgcolor: "action.hover" },
                   }}
                 >
                   <ListItemIcon
@@ -270,22 +178,51 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
                   >
                     {item.icon}
                   </ListItemIcon>
-                  {!collapsed && <ListItemText primary={item.text} />}
+                  {!collapsed && (
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{ noWrap: true, fontSize: 14 }}
+                    />
+                  )}
                 </ListItemButton>
               </Tooltip>
             </ListItem>
           ))}
       </List>
-      {!collapsed && (
-        <Box sx={{ p: 2, textAlign: "center" }}>
-          <Typography variant="caption" color="text.secondary">
-            {user?.firstName} {user?.lastName}
-          </Typography>
-          <Typography variant="caption" display="block" color="text.secondary">
-            {user?.roles?.[0]}
-          </Typography>
-        </Box>
-      )}
+
+      <Divider />
+      <Box
+        sx={{
+          p: collapsed ? 1 : 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          minHeight: 64,
+          overflow: "hidden",
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: "secondary.main",
+            flexShrink: 0,
+            fontSize: 14,
+          }}
+        >
+          {user?.firstName?.[0] || "U"}
+        </Avatar>
+        {!collapsed && (
+          <Box sx={{ overflow: "hidden" }}>
+            <Typography variant="body2" fontWeight="medium" noWrap>
+              {user?.firstName} {user?.lastName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {user?.roles?.[0]}
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 
@@ -293,26 +230,22 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
     return <>{children}</>;
   }
 
-  const drawerWidth = isCollapsed ? drawerWidthCollapsed : drawerWidthExpanded;
-
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
+
+      {/* ── AppBar ── */}
       <AppBar
         position="fixed"
+        elevation={1}
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          transition: theme.transitions.create(["width", "margin"], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
+          width: { sm: `calc(100% - ${DRAWER_COLLAPSED}px)` },
+          ml: { sm: `${DRAWER_COLLAPSED}px` },
         }}
       >
         <Toolbar>
           <IconButton
             color="inherit"
-            aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: "none" } }}
@@ -320,7 +253,7 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             {menuItems.find((item) => item.path === pathname)?.text || "HRM"}
           </Typography>
 
@@ -338,18 +271,15 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
         </Toolbar>
       </AppBar>
 
+      {/* ── Sidebar nav ── */}
       <Box
         component="nav"
         sx={{
-          width: { sm: drawerWidth },
+          width: { sm: DRAWER_COLLAPSED },
           flexShrink: { sm: 0 },
-          transition: theme.transitions.create("width", {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
         }}
       >
-        {/* Mobile Drawer */}
+        {/* Mobile drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -359,51 +289,54 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
             display: { xs: "block", sm: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidthExpanded,
+              width: DRAWER_EXPANDED,
             },
           }}
         >
-          {drawer(false)}
+          {drawerContent(false)}
         </Drawer>
 
-        {/* Desktop Drawer */}
+        {/* Desktop hover drawer */}
         <Drawer
           variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
+          PaperProps={{
+            onMouseEnter: () => setIsHovered(true),
+            onMouseLeave: () => setIsHovered(false),
+            sx: {
+              width: isHovered ? DRAWER_EXPANDED : DRAWER_COLLAPSED,
               overflowX: "hidden",
+              whiteSpace: "nowrap",
               transition: theme.transitions.create("width", {
                 easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
+                duration: isHovered
+                  ? theme.transitions.duration.enteringScreen
+                  : theme.transitions.duration.leavingScreen,
               }),
+              boxSizing: "border-box",
+              boxShadow: isHovered ? 4 : 0,
             },
           }}
+          sx={{ display: { xs: "none", sm: "block" } }}
           open
         >
-          {drawer(isCollapsed)}
+          {drawerContent(!isHovered)}
         </Drawer>
       </Box>
 
+      {/* ── Main content ── */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${DRAWER_COLLAPSED}px)` },
           mt: 8,
-          transition: theme.transitions.create(["width", "margin"], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
         }}
       >
         {children}
       </Box>
 
-      {/* User Menu */}
+      {/* ── User account menu ── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -425,7 +358,7 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
         </MenuItem>
       </Menu>
 
-      {/* Notifications Menu */}
+      {/* ── Notifications menu ── */}
       <Menu
         anchorEl={notificationAnchor}
         open={Boolean(notificationAnchor)}

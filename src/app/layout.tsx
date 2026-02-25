@@ -10,7 +10,7 @@ import { store } from "@/store";
 import { apolloClient } from "@/lib/apollo";
 import AuthProvider from "@/components/providers/AuthProvider";
 import NotificationProvider from "@/components/providers/NotificationProvider";
-import Layout from "@/components/layout/Layout";
+import Layout from "@/components/layout/CollapsibleLayout";
 import "./globals.css";
 
 const theme = createTheme({

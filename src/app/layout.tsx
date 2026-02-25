@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "@apollo/client";
@@ -10,23 +9,9 @@ import { store } from "@/store";
 import { apolloClient } from "@/lib/apollo";
 import AuthProvider from "@/components/providers/AuthProvider";
 import NotificationProvider from "@/components/providers/NotificationProvider";
+import ThemeProvider from "@/components/providers/ThemeProvider";
 import Layout from "@/components/layout/CollapsibleLayout";
 import "./globals.css";
-
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#1976d2",
-    },
-    secondary: {
-      main: "#dc004e",
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-  },
-});
 
 export default function RootLayout({
   children,
@@ -38,7 +23,7 @@ export default function RootLayout({
       <body>
         <Provider store={store}>
           <ApolloProvider client={apolloClient}>
-            <ThemeProvider theme={theme}>
+            <ThemeProvider>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <CssBaseline />
                 <AuthProvider>

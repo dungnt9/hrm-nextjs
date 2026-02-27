@@ -38,6 +38,8 @@ import {
   AssignmentTurnedIn as AttendanceCheckIcon,
   BarChart as BarChartIcon,
   MoreTime as OvertimeIcon,
+  Receipt as ReceiptIcon,
+  Campaign as CampaignIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
@@ -72,6 +74,18 @@ const menuItems = [
     text: "Overtime",
     icon: <OvertimeIcon />,
     path: "/overtime",
+    roles: ["employee"],
+  },
+  {
+    text: "Phiếu lương",
+    icon: <ReceiptIcon />,
+    path: "/payroll",
+    roles: ["employee"],
+  },
+  {
+    text: "Thông báo",
+    icon: <CampaignIcon />,
+    path: "/announcements",
     roles: ["employee"],
   },
   {

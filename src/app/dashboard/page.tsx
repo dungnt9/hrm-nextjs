@@ -30,6 +30,8 @@ import {
   AdminPanelSettings as AdminIcon,
   SupervisorAccount as ManagerIcon,
   Badge as BadgeIcon,
+  Campaign as CampaignIcon,
+  PushPin as PushPinIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import {
@@ -45,6 +47,7 @@ import {
   employeeApi,
   departmentApi,
   teamApi,
+  announcementApi,
 } from "@/lib/api";
 import dayjs from "dayjs";
 
@@ -99,11 +102,14 @@ export default function DashboardPage() {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [orgStats, setOrgStats] = useState<OrgStats | null>(null);
   const [orgLoading, setOrgLoading] = useState(false);
+  const [latestAnnouncements, setLatestAnnouncements] = useState<any[]>([]);
+  const [annLoading, setAnnLoading] = useState(true);
 
   useEffect(() => {
     fetchAttendanceStatus();
     fetchLeaveBalance();
     fetchMonthlyStats();
+    fetchLatestAnnouncements();
     if (isManagerOrAbove) fetchApprovalStats();
     if (isHR || isAdmin) fetchOrgStats();
   }, []);
@@ -219,6 +225,18 @@ export default function DashboardPage() {
       setApprovalStats({ pendingLeave: 0, pendingOvertime: 0 });
     } finally {
       setApprovalLoading(false);
+    }
+  };
+
+  const fetchLatestAnnouncements = async () => {
+    try {
+      setAnnLoading(true);
+      const res = await announcementApi.getAll({ pageSize: 3 });
+      setLatestAnnouncements((res as any).data ?? []);
+    } catch {
+      setLatestAnnouncements([]);
+    } finally {
+      setAnnLoading(false);
     }
   };
 
@@ -672,6 +690,51 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         )}
+
+        {/* Announcements Widget */}
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: "100%" }}>
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <CampaignIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">Thông Báo</Typography>
+                </Box>
+                <Link href="/announcements" passHref>
+                  <Typography variant="body2" color="primary" sx={{ cursor: "pointer", textDecoration: "underline" }}>
+                    Xem tất cả
+                  </Typography>
+                </Link>
+              </Box>
+
+              {annLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : latestAnnouncements.length === 0 ? (
+                <Typography color="text.secondary" variant="body2">Chưa có thông báo nào</Typography>
+              ) : (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                  {latestAnnouncements.map((a: any, i: number) => (
+                    <Box key={a.id}>
+                      {i > 0 && <Divider sx={{ mb: 1.5 }} />}
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
+                        {a.isPinned && <PushPinIcon fontSize="small" color="primary" sx={{ mt: 0.2, flexShrink: 0 }} />}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight="bold" noWrap>{a.title}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(a.createdAt).toLocaleDateString("vi-VN")}
+                            {a.departmentName && ` • ${a.departmentName}`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Quick Actions — role-aware */}
         <Grid item xs={12} md={6} lg={4}>

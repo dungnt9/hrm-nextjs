@@ -348,3 +348,125 @@ export const teamAttendanceApi = {
     return fetchApi<any>(`/api/attendance/team/${teamId}?${query.toString()}`);
   },
 };
+
+// Document API
+export const documentApi = {
+  getAll: (employeeId: string) =>
+    fetchApi<any[]>(`/api/employees/${employeeId}/documents`),
+
+  add: (
+    employeeId: string,
+    data: {
+      documentType: string;
+      documentName: string;
+      filePath: string;
+      description?: string;
+    }
+  ) =>
+    fetchApi<any>(`/api/employees/${employeeId}/documents`, {
+      method: "POST",
+      body: data,
+    }),
+
+  delete: (employeeId: string, documentId: string) =>
+    fetchApi<void>(`/api/employees/${employeeId}/documents/${documentId}`, {
+      method: "DELETE",
+    }),
+};
+
+// Contact (Emergency) API
+export const contactApi = {
+  getAll: (employeeId: string) =>
+    fetchApi<any[]>(`/api/employees/${employeeId}/contacts`),
+
+  add: (
+    employeeId: string,
+    data: {
+      contactName: string;
+      relationship: string;
+      phone: string;
+      email?: string;
+      address?: string;
+      isPrimary?: boolean;
+    }
+  ) =>
+    fetchApi<any>(`/api/employees/${employeeId}/contacts`, {
+      method: "POST",
+      body: data,
+    }),
+
+  update: (
+    employeeId: string,
+    contactId: string,
+    data: {
+      contactName: string;
+      relationship: string;
+      phone: string;
+      email?: string;
+      address?: string;
+      isPrimary?: boolean;
+    }
+  ) =>
+    fetchApi<any>(`/api/employees/${employeeId}/contacts/${contactId}`, {
+      method: "PUT",
+      body: data,
+    }),
+
+  delete: (employeeId: string, contactId: string) =>
+    fetchApi<void>(`/api/employees/${employeeId}/contacts/${contactId}`, {
+      method: "DELETE",
+    }),
+};
+
+// Announcement API
+export const announcementApi = {
+  getAll: (params?: {
+    category?: string;
+    departmentId?: string;
+    includeExpired?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.category) query.append("category", params.category);
+    if (params?.departmentId) query.append("departmentId", params.departmentId);
+    if (params?.includeExpired) query.append("includeExpired", "true");
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.pageSize) query.append("pageSize", params.pageSize.toString());
+    return fetchApi<any>(`/api/announcements?${query.toString()}`);
+  },
+
+  getById: (id: string) => fetchApi<any>(`/api/announcements/${id}`),
+
+  create: (data: {
+    title: string;
+    content: string;
+    category: string;
+    isPinned?: boolean;
+    expiresAt?: string;
+    departmentId?: string;
+  }) =>
+    fetchApi<any>("/api/announcements", {
+      method: "POST",
+      body: data,
+    }),
+
+  update: (
+    id: string,
+    data: {
+      title: string;
+      content: string;
+      category: string;
+      isPinned?: boolean;
+      expiresAt?: string;
+      departmentId?: string;
+    }
+  ) =>
+    fetchApi<any>(`/api/announcements/${id}`, {
+      method: "PUT",
+      body: data,
+    }),
+
+  delete: (id: string) =>
+    fetchApi<void>(`/api/announcements/${id}`, { method: "DELETE" }),
+};

@@ -47,6 +47,8 @@ import {
   CalendarMonth as CalendarMonthIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
+  Receipt as ReceiptIcon,
+  Campaign as CampaignIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
@@ -118,20 +120,26 @@ interface LayoutProps {
 }
 
 const menuItems = [
-  { text: "Dashboard",       icon: <DashboardIcon />,       path: "/dashboard" },
-  { text: "Attendance",      icon: <AccessTimeIcon />,      path: "/attendance" },
-  { text: "Leave Requests",  icon: <EventNoteIcon />,       path: "/leave" },
-  { text: "Overtime",        icon: <OvertimeIcon />,        path: "/overtime" },
-  { text: "Calendar",        icon: <CalendarMonthIcon />,   path: "/calendar" },
-  { text: "Employees",       icon: <PeopleIcon />,          path: "/employees" },
-  { text: "Departments",     icon: <BusinessIcon />,        path: "/departments" },
-  { text: "Teams",           icon: <GroupIcon />,           path: "/teams" },
-  { text: "Team Attendance", icon: <AttendanceCheckIcon />, path: "/team-attendance" },
-  { text: "Shifts",          icon: <ScheduleIcon />,        path: "/shifts" },
-  { text: "Organization",    icon: <AccountTreeIcon />,     path: "/organization" },
-  { text: "Approvals",       icon: <EventNoteIcon />,       path: "/approvals" },
-  { text: "Reports",         icon: <BarChartIcon />,        path: "/reports" },
-  { text: "Settings",        icon: <SettingsIcon />,        path: "/settings" },
+  { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+  { text: "Attendance", icon: <AccessTimeIcon />, path: "/attendance" },
+  { text: "Leave Requests", icon: <EventNoteIcon />, path: "/leave" },
+  { text: "Overtime", icon: <OvertimeIcon />, path: "/overtime" },
+  { text: "Payroll", icon: <ReceiptIcon />, path: "/payroll" },
+  { text: "Announcements", icon: <CampaignIcon />, path: "/announcements" },
+  { text: "Calendar", icon: <CalendarMonthIcon />, path: "/calendar" },
+  { text: "Employees", icon: <PeopleIcon />, path: "/employees" },
+  { text: "Departments", icon: <BusinessIcon />, path: "/departments" },
+  { text: "Teams", icon: <GroupIcon />, path: "/teams" },
+  {
+    text: "Team Attendance",
+    icon: <AttendanceCheckIcon />,
+    path: "/team-attendance",
+  },
+  { text: "Shifts", icon: <ScheduleIcon />, path: "/shifts" },
+  { text: "Organization", icon: <AccountTreeIcon />, path: "/organization" },
+  { text: "Approvals", icon: <EventNoteIcon />, path: "/approvals" },
+  { text: "Reports", icon: <BarChartIcon />, path: "/reports" },
+  { text: "Settings", icon: <SettingsIcon />, path: "/settings" },
 ];
 
 export default function CollapsibleLayout({ children }: LayoutProps) {
@@ -145,7 +153,7 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
   const SB = getSB(isDark);
 
   const { user, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const { unreadCount } = useSelector((state: RootState) => state.notification);
 
@@ -270,20 +278,36 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
       <Box sx={{ mx: 2, borderBottom: `1px solid ${SB.divider}`, mb: 1 }} />
 
       {/* Nav list */}
-      <List sx={{
-        flexGrow: 1, py: 0.5, overflowY: "auto", overflowX: "hidden",
-        "&::-webkit-scrollbar": { width: 4 },
-        "&::-webkit-scrollbar-track": { background: "transparent" },
-        "&::-webkit-scrollbar-thumb": { background: SB.divider, borderRadius: 2 },
-      }}>
+      <List
+        sx={{
+          flexGrow: 1,
+          py: 0.5,
+          overflowY: "auto",
+          overflowX: "hidden",
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": {
+            background: SB.divider,
+            borderRadius: 2,
+          },
+        }}
+      >
         {menuItems.map((item) => {
           const selected = pathname === item.path;
           const isLoading = isPending && navTarget === item.path;
           const isActive = selected || isLoading;
 
           return (
-            <ListItem key={item.text} disablePadding sx={{ display: "block", px: 1, mb: 0.5 }}>
-              <Tooltip title={collapsed ? item.text : ""} placement="right" arrow>
+            <ListItem
+              key={item.text}
+              disablePadding
+              sx={{ display: "block", px: 1, mb: 0.5 }}
+            >
+              <Tooltip
+                title={collapsed ? item.text : ""}
+                placement="right"
+                arrow
+              >
                 <ListItemButton
                   selected={selected}
                   disabled={isPending}
@@ -309,7 +333,9 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
                       background: SB.selectedBg,
                       "&:hover": { background: SB.selectedBg },
                     },
-                    "&.Mui-disabled": { opacity: isPending && !isLoading ? 0.55 : 1 },
+                    "&.Mui-disabled": {
+                      opacity: isPending && !isLoading ? 0.55 : 1,
+                    },
                   }}
                 >
                   <ListItemIcon
@@ -393,10 +419,19 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
         </Avatar>
         {!collapsed && (
           <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
-            <Typography variant="body2" fontWeight={600} noWrap sx={{ color: SB.text }}>
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              noWrap
+              sx={{ color: SB.text }}
+            >
               {user?.firstName} {user?.lastName}
             </Typography>
-            <Typography variant="caption" noWrap sx={{ color: SB.textSecondary, fontSize: 11 }}>
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ color: SB.textSecondary, fontSize: 11 }}
+            >
               {getPrimaryRole(user?.roles)}
             </Typography>
           </Box>
@@ -431,15 +466,17 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
           sx={{
             height: "100%",
             width: `${barProgress}%`,
-            background: "linear-gradient(90deg, #6366f1 0%, #3b82f6 60%, #06b6d4 100%)",
+            background:
+              "linear-gradient(90deg, #6366f1 0%, #3b82f6 60%, #06b6d4 100%)",
             transition:
               barProgress === 0
                 ? "none"
                 : barProgress === 100
-                ? "width 0.25s ease-out"
-                : "width 0.9s cubic-bezier(0.1, 0.05, 0, 1)",
+                  ? "width 0.25s ease-out"
+                  : "width 0.9s cubic-bezier(0.1, 0.05, 0, 1)",
             borderRadius: "0 3px 3px 0",
-            boxShadow: "0 0 10px rgba(99,102,241,0.7), 0 0 4px rgba(59,130,246,0.9)",
+            boxShadow:
+              "0 0 10px rgba(99,102,241,0.7), 0 0 4px rgba(59,130,246,0.9)",
             position: "relative",
             "&::after": {
               content: '""',
@@ -669,10 +706,9 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
           sx={{
             px: 2,
             py: 1.5,
-            background:
-              isDark
-                ? "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.18))"
-                : "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(59,130,246,0.1))",
+            background: isDark
+              ? "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.18))"
+              : "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(59,130,246,0.1))",
             borderRadius: "8px 8px 0 0",
           }}
         >
@@ -725,10 +761,9 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background:
-              isDark
-                ? "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.18))"
-                : "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(59,130,246,0.1))",
+            background: isDark
+              ? "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.18))"
+              : "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(59,130,246,0.1))",
             borderRadius: "8px 8px 0 0",
           }}
         >
@@ -757,7 +792,12 @@ export default function CollapsibleLayout({ children }: LayoutProps) {
             handleNavigation("/notifications");
             handleNotificationClose();
           }}
-          sx={{ justifyContent: "center", color: "primary.main", fontWeight: 600, py: 1.5 }}
+          sx={{
+            justifyContent: "center",
+            color: "primary.main",
+            fontWeight: 600,
+            py: 1.5,
+          }}
         >
           View all notifications
         </MenuItem>

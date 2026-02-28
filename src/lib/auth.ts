@@ -9,7 +9,7 @@ function decodeJwt<T>(token: string): T | null {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch {
@@ -30,6 +30,7 @@ interface DecodedToken {
   email: string;
   given_name: string;
   family_name: string;
+  roles?: string[]; // Top-level roles claim
   realm_access?: { roles: string[] };
   resource_access?: { [clientId: string]: { roles: string[] } };
   exp: number;
@@ -86,21 +87,24 @@ export const isTokenExpired = (token: string): boolean => {
 
 const APP_ROLES = ["employee", "manager", "hr_staff", "system_admin"];
 
-// Extract roles from token — check realm_access first, then resource_access client roles
+// Extract roles from token — check top-level roles, realm_access, then resource_access
 function extractRoles(decoded: DecodedToken): string[] {
+  const topLevelRoles = decoded.roles ?? [];
   const realmRoles = decoded.realm_access?.roles ?? [];
 
   // Collect all client roles from resource_access
   const clientRoles = Object.values(decoded.resource_access ?? {}).flatMap(
-    (c) => c.roles ?? []
+    (c) => c.roles ?? [],
   );
 
   const seen = new Set<string>();
-  const allRoles = [...realmRoles, ...clientRoles].filter((r) => {
-    if (seen.has(r)) return false;
-    seen.add(r);
-    return true;
-  });
+  const allRoles = [...topLevelRoles, ...realmRoles, ...clientRoles].filter(
+    (r) => {
+      if (seen.has(r)) return false;
+      seen.add(r);
+      return true;
+    },
+  );
 
   // If any known app role is present, return them directly
   if (allRoles.some((r) => APP_ROLES.includes(r))) {
@@ -128,7 +132,7 @@ export const getUserFromToken = (token: string): User | null => {
 // Login API
 export const login = async (
   username: string,
-  password: string
+  password: string,
 ): Promise<{ user: User; token: string }> => {
   const response = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
@@ -139,7 +143,9 @@ export const login = async (
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Login failed" }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Login failed" }));
     throw new Error(error.message || "Invalid username or password");
   }
 
@@ -211,7 +217,10 @@ export const logout = async (): Promise<void> => {
 };
 
 // Check auth status on load
-export const checkAuthStatus = async (): Promise<{ user: User; token: string } | null> => {
+export const checkAuthStatus = async (): Promise<{
+  user: User;
+  token: string;
+} | null> => {
   const accessToken = getAccessToken();
 
   if (!accessToken) {

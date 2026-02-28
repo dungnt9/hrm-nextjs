@@ -13,6 +13,18 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_NOTIFICATION_HUB_URL ||
       "http://localhost:5005/hubs/notification",
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:5000/api/:path*",
+      },
+      {
+        source: "/graphql",
+        destination: "http://localhost:5000/graphql",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

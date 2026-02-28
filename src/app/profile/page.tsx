@@ -46,6 +46,7 @@ import {
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { authApi, employeeApi, notificationApi, documentApi, contactApi } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth";
 import { setAuthenticated } from "@/store/slices/authSlice";
 import dayjs from "dayjs";
 
@@ -167,7 +168,7 @@ export default function ProfilePage() {
       setSubmitting(true);
       setError(null);
       await employeeApi.updateMe(formData);
-      dispatch(setAuthenticated({ user: { ...user, ...formData } as any, token: localStorage.getItem("access_token") || "" }));
+      dispatch(setAuthenticated({ user: { ...user, ...formData } as any, token: getAccessToken() || "" }));
       setIsEditing(false);
       setProfile({ ...profile, ...formData });
     } catch (err: any) {

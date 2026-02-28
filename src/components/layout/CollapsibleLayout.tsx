@@ -49,6 +49,8 @@ import {
   Brightness7 as Brightness7Icon,
   Receipt as ReceiptIcon,
   Campaign as CampaignIcon,
+  School as SchoolIcon,
+  TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
@@ -128,6 +130,11 @@ const menuItems = [
   { text: "Announcements", icon: <CampaignIcon />, path: "/announcements" },
   { text: "Calendar", icon: <CalendarMonthIcon />, path: "/calendar" },
   { text: "Employees", icon: <PeopleIcon />, path: "/employees" },
+  {
+    text: "Employee Development",
+    icon: <TrendingUpIcon />,
+    path: "/employee-development",
+  },
   { text: "Departments", icon: <BusinessIcon />, path: "/departments" },
   { text: "Teams", icon: <GroupIcon />, path: "/teams" },
   {

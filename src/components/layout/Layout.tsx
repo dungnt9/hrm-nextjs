@@ -40,6 +40,7 @@ import {
   MoreTime as OvertimeIcon,
   Receipt as ReceiptIcon,
   Campaign as CampaignIcon,
+  TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
 import { logout } from "@/lib/auth";
@@ -95,6 +96,12 @@ const menuItems = [
     roles: ["hr_staff", "manager", "system_admin"],
   },
   {
+    text: "Employee Development",
+    icon: <TrendingUpIcon />,
+    path: "/employee-development",
+    roles: ["employee"],
+  },
+  {
     text: "Teams",
     icon: <GroupIcon />,
     path: "/teams",
@@ -143,7 +150,7 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const { unreadCount } = useSelector((state: RootState) => state.notification);
 

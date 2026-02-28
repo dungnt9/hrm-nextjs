@@ -365,7 +365,9 @@ export default function EmployeeDevelopmentPage() {
               <Select
                 value={selectedEmployee?.id || ""}
                 onChange={(e) => {
-                  const emp = employees.find((emp) => emp.id === e.target.value);
+                  const emp = employees.find(
+                    (emp) => emp.id === e.target.value,
+                  );
                   setSelectedEmployee(emp);
                 }}
                 label="Select Employee"

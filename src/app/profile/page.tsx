@@ -45,13 +45,31 @@ import {
   Delete as DeleteIcon,
 } from "@mui/icons-material";
 import { RootState } from "@/store";
-import { authApi, employeeApi, notificationApi, documentApi, contactApi } from "@/lib/api";
+import {
+  authApi,
+  employeeApi,
+  notificationApi,
+  documentApi,
+  contactApi,
+} from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
 import { setAuthenticated } from "@/store/slices/authSlice";
 import dayjs from "dayjs";
 
-const emptyDocForm = { documentType: "", documentName: "", filePath: "", description: "" };
-const emptyContactForm = { contactName: "", relationship: "", phone: "", email: "", address: "", isPrimary: false };
+const emptyDocForm = {
+  documentType: "",
+  documentName: "",
+  filePath: "",
+  description: "",
+};
+const emptyContactForm = {
+  contactName: "",
+  relationship: "",
+  phone: "",
+  email: "",
+  address: "",
+  isPrimary: false,
+};
 
 export default function ProfilePage() {
   const dispatch = useDispatch();
@@ -125,8 +143,14 @@ export default function ProfilePage() {
       });
       // Load documents and contacts
       if (data.id) {
-        documentApi.getAll(data.id).then(setDocuments).catch(() => {});
-        contactApi.getAll(data.id).then(setContacts).catch(() => {});
+        documentApi
+          .getAll(data.id)
+          .then(setDocuments)
+          .catch(() => {});
+        contactApi
+          .getAll(data.id)
+          .then(setContacts)
+          .catch(() => {});
       }
     } catch (err: any) {
       setError(err.message || "Không thể tải thông tin cá nhân");
@@ -168,7 +192,12 @@ export default function ProfilePage() {
       setSubmitting(true);
       setError(null);
       await employeeApi.updateMe(formData);
-      dispatch(setAuthenticated({ user: { ...user, ...formData } as any, token: getAccessToken() || "" }));
+      dispatch(
+        setAuthenticated({
+          user: { ...user, ...formData } as any,
+          token: getAccessToken() || "",
+        }),
+      );
       setIsEditing(false);
       setProfile({ ...profile, ...formData });
     } catch (err: any) {
@@ -179,7 +208,11 @@ export default function ProfilePage() {
   };
 
   const handleChangePassword = async () => {
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
       setError("Vui lòng điền đầy đủ thông tin mật khẩu");
       return;
     }
@@ -194,9 +227,16 @@ export default function ProfilePage() {
     try {
       setSubmitting(true);
       setError(null);
-      await authApi.changePassword({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
+      await authApi.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
       setPasswordDialogOpen(false);
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (err: any) {
       setError(err.message || "Không thể đổi mật khẩu");
     } finally {
@@ -205,7 +245,10 @@ export default function ProfilePage() {
   };
 
   const handleNotificationSettingsChange = async (key: string) => {
-    const newSettings = { ...notificationSettings, [key]: !notificationSettings[key as keyof typeof notificationSettings] };
+    const newSettings = {
+      ...notificationSettings,
+      [key]: !notificationSettings[key as keyof typeof notificationSettings],
+    };
     setNotificationSettings(newSettings);
     try {
       setSavingNotifications(true);
@@ -270,8 +313,14 @@ export default function ProfilePage() {
     setSavingContact(true);
     try {
       if (editingContact) {
-        const updated = await contactApi.update(profile.id, editingContact.id, contactForm);
-        setContacts(contacts.map((c) => (c.id === editingContact.id ? updated : c)));
+        const updated = await contactApi.update(
+          profile.id,
+          editingContact.id,
+          contactForm,
+        );
+        setContacts(
+          contacts.map((c) => (c.id === editingContact.id ? updated : c)),
+        );
       } else {
         const newContact = await contactApi.add(profile.id, contactForm);
         setContacts([...contacts, newContact]);
@@ -296,7 +345,14 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -304,22 +360,48 @@ export default function ProfilePage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Hồ sơ cá nhân</Typography>
+      <Typography variant="h4" gutterBottom>
+        Hồ sơ cá nhân
+      </Typography>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {/* Profile Header Card */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
-            <Avatar sx={{ width: 100, height: 100, bgcolor: "primary.main", fontSize: "2rem" }}>
-              {formData.firstName?.[0]}{formData.lastName?.[0]}
+            <Avatar
+              sx={{
+                width: 100,
+                height: 100,
+                bgcolor: "primary.main",
+                fontSize: "2rem",
+              }}
+            >
+              {formData.firstName?.[0]}
+              {formData.lastName?.[0]}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "start",
+                }}
+              >
                 <Box>
-                  <Typography variant="h5">{formData.firstName} {formData.lastName}</Typography>
-                  <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  <Typography variant="h5">
+                    {formData.firstName} {formData.lastName}
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     {formData.position || "Nhân viên"}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -327,12 +409,17 @@ export default function ProfilePage() {
                   </Typography>
                   {profile?.hireDate && (
                     <Typography variant="body2" color="text.secondary">
-                      Ngày vào làm: {dayjs(profile.hireDate).format("DD/MM/YYYY")}
+                      Ngày vào làm:{" "}
+                      {dayjs(profile.hireDate).format("DD/MM/YYYY")}
                     </Typography>
                   )}
                 </Box>
                 {!isEditing && (
-                  <Button variant="contained" startIcon={<EditIcon />} onClick={() => setIsEditing(true)}>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={() => setIsEditing(true)}
+                  >
                     Chỉnh sửa
                   </Button>
                 )}
@@ -347,7 +434,11 @@ export default function ProfilePage() {
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab icon={<ProfileIcon />} iconPosition="start" label="Thông tin" />
           <Tab icon={<DocumentIcon />} iconPosition="start" label="Tài liệu" />
-          <Tab icon={<ContactIcon />} iconPosition="start" label="Liên hệ khẩn cấp" />
+          <Tab
+            icon={<ContactIcon />}
+            iconPosition="start"
+            label="Liên hệ khẩn cấp"
+          />
         </Tabs>
       </Box>
 
@@ -366,37 +457,93 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <TextField fullWidth label="Họ *" value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
+                      <TextField
+                        fullWidth
+                        label="Họ *"
+                        value={formData.firstName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            firstName: e.target.value,
+                          })
+                        }
+                      />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField fullWidth label="Tên *" value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
+                      <TextField
+                        fullWidth
+                        label="Tên *"
+                        value={formData.lastName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, lastName: e.target.value })
+                        }
+                      />
                     </Grid>
                     <Grid item xs={12}>
-                      <TextField fullWidth label="Email *" type="email" value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                      <TextField
+                        fullWidth
+                        label="Email *"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                      />
                     </Grid>
                     <Grid item xs={12}>
-                      <TextField fullWidth label="Số điện thoại" value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                      <TextField
+                        fullWidth
+                        label="Số điện thoại"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                      />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField fullWidth label="Chức vụ" value={formData.position}
-                        onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
+                      <TextField
+                        fullWidth
+                        label="Chức vụ"
+                        value={formData.position}
+                        onChange={(e) =>
+                          setFormData({ ...formData, position: e.target.value })
+                        }
+                      />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField fullWidth label="Phòng ban" value={formData.department} disabled />
+                      <TextField
+                        fullWidth
+                        label="Phòng ban"
+                        value={formData.department}
+                        disabled
+                      />
                     </Grid>
                     <Grid item xs={12}>
-                      <TextField fullWidth label="Nhóm" value={formData.team} disabled />
+                      <TextField
+                        fullWidth
+                        label="Nhóm"
+                        value={formData.team}
+                        disabled
+                      />
                     </Grid>
                     <Grid item xs={12}>
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSaveProfile} disabled={submitting}>
+                        <Button
+                          variant="contained"
+                          startIcon={<SaveIcon />}
+                          onClick={handleSaveProfile}
+                          disabled={submitting}
+                        >
                           {submitting ? "Đang lưu..." : "Lưu thay đổi"}
                         </Button>
-                        <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => { setIsEditing(false); fetchProfile(); }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<CancelIcon />}
+                          onClick={() => {
+                            setIsEditing(false);
+                            fetchProfile();
+                          }}
+                        >
                           Hủy
                         </Button>
                       </Box>
@@ -414,8 +561,12 @@ export default function ProfilePage() {
                       { label: "Nhóm", value: formData.team || "—" },
                     ].map((f) => (
                       <Grid item xs={12} sm={6} key={f.label}>
-                        <Typography variant="body2" color="text.secondary">{f.label}</Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{f.value}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {f.label}
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {f.value}
+                        </Typography>
                       </Grid>
                     ))}
                   </Grid>
@@ -432,7 +583,11 @@ export default function ProfilePage() {
                   <Typography variant="h6">Bảo mật</Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
-                <Button variant="outlined" fullWidth onClick={() => setPasswordDialogOpen(true)}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => setPasswordDialogOpen(true)}
+                >
                   Đổi mật khẩu
                 </Button>
               </CardContent>
@@ -440,13 +595,24 @@ export default function ProfilePage() {
 
             <Card>
               <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 2,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <NotificationsIcon sx={{ mr: 1, color: "primary.main" }} />
                     <Typography variant="h6">Thông báo</Typography>
                   </Box>
                   {savingNotifications && <CircularProgress size={20} />}
-                  {notificationSuccess && <Typography variant="caption" color="success.main">Đã lưu!</Typography>}
+                  {notificationSuccess && (
+                    <Typography variant="caption" color="success.main">
+                      Đã lưu!
+                    </Typography>
+                  )}
                 </Box>
                 <Divider sx={{ mb: 2 }} />
                 <Box>
@@ -455,9 +621,21 @@ export default function ProfilePage() {
                     { key: "smsNotifications", label: "SMS" },
                     { key: "pushNotifications", label: "Push" },
                   ].map((n) => (
-                    <FormControlLabel key={n.key}
-                      control={<Switch checked={notificationSettings[n.key as keyof typeof notificationSettings]}
-                        onChange={() => handleNotificationSettingsChange(n.key)} disabled={savingNotifications} />}
+                    <FormControlLabel
+                      key={n.key}
+                      control={
+                        <Switch
+                          checked={
+                            notificationSettings[
+                              n.key as keyof typeof notificationSettings
+                            ]
+                          }
+                          onChange={() =>
+                            handleNotificationSettingsChange(n.key)
+                          }
+                          disabled={savingNotifications}
+                        />
+                      }
                       label={n.label}
                     />
                   ))}
@@ -472,9 +650,21 @@ export default function ProfilePage() {
       {tabValue === 1 && (
         <Card>
           <CardContent>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
               <Typography variant="h6">Tài liệu</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => setDocDialogOpen(true)}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                size="small"
+                onClick={() => setDocDialogOpen(true)}
+              >
                 Thêm tài liệu
               </Button>
             </Box>
@@ -492,7 +682,11 @@ export default function ProfilePage() {
                 <TableBody>
                   {documents.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ color: "text.secondary" }}>
+                      <TableCell
+                        colSpan={5}
+                        align="center"
+                        sx={{ color: "text.secondary" }}
+                      >
                         Chưa có tài liệu nào
                       </TableCell>
                     </TableRow>
@@ -501,12 +695,27 @@ export default function ProfilePage() {
                       <TableRow key={d.id}>
                         <TableCell>{d.documentType}</TableCell>
                         <TableCell>{d.documentName}</TableCell>
-                        <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <TableCell
+                          sx={{
+                            maxWidth: 200,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {d.filePath}
                         </TableCell>
-                        <TableCell>{d.uploadedAt ? dayjs(d.uploadedAt).format("DD/MM/YYYY") : "—"}</TableCell>
+                        <TableCell>
+                          {d.uploadedAt
+                            ? dayjs(d.uploadedAt).format("DD/MM/YYYY")
+                            : "—"}
+                        </TableCell>
                         <TableCell align="right">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteDoc(d.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteDoc(d.id)}
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
@@ -524,36 +733,86 @@ export default function ProfilePage() {
       {tabValue === 2 && (
         <Card>
           <CardContent>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
               <Typography variant="h6">Liên hệ khẩn cấp</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={openAddContact}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                size="small"
+                onClick={openAddContact}
+              >
                 Thêm liên hệ
               </Button>
             </Box>
             <Grid container spacing={2}>
               {contacts.length === 0 ? (
                 <Grid item xs={12}>
-                  <Typography color="text.secondary" textAlign="center">Chưa có liên hệ khẩn cấp nào</Typography>
+                  <Typography color="text.secondary" textAlign="center">
+                    Chưa có liên hệ khẩn cấp nào
+                  </Typography>
                 </Grid>
               ) : (
                 contacts.map((c) => (
                   <Grid item xs={12} sm={6} md={4} key={c.id}>
                     <Card variant="outlined">
                       <CardContent>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                          }}
+                        >
                           <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">{c.contactName}</Typography>
-                            {c.isPrimary && <Chip label="Chính" size="small" color="primary" sx={{ mb: 0.5 }} />}
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {c.contactName}
+                            </Typography>
+                            {c.isPrimary && (
+                              <Chip
+                                label="Chính"
+                                size="small"
+                                color="primary"
+                                sx={{ mb: 0.5 }}
+                              />
+                            )}
                           </Box>
                           <Box>
-                            <IconButton size="small" onClick={() => openEditContact(c)}><EditIcon fontSize="small" /></IconButton>
-                            <IconButton size="small" color="error" onClick={() => handleDeleteContact(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => openEditContact(c)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteContact(c.id)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
                           </Box>
                         </Box>
-                        <Typography variant="body2" color="text.secondary">Quan hệ: {c.relationship}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Quan hệ: {c.relationship}
+                        </Typography>
                         <Typography variant="body2">SĐT: {c.phone}</Typography>
-                        {c.email && <Typography variant="body2">Email: {c.email}</Typography>}
-                        {c.address && <Typography variant="body2">Địa chỉ: {c.address}</Typography>}
+                        {c.email && (
+                          <Typography variant="body2">
+                            Email: {c.email}
+                          </Typography>
+                        )}
+                        {c.address && (
+                          <Typography variant="body2">
+                            Địa chỉ: {c.address}
+                          </Typography>
+                        )}
                       </CardContent>
                     </Card>
                   </Grid>
@@ -565,7 +824,12 @@ export default function ProfilePage() {
       )}
 
       {/* Change Password Dialog */}
-      <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={passwordDialogOpen}
+        onClose={() => setPasswordDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Đổi mật khẩu</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -575,66 +839,187 @@ export default function ProfilePage() {
               { label: "Xác nhận mật khẩu mới *", key: "confirmPassword" },
             ].map((f) => (
               <Grid item xs={12} key={f.key}>
-                <TextField fullWidth label={f.label} type="password"
+                <TextField
+                  fullWidth
+                  label={f.label}
+                  type="password"
                   value={passwordData[f.key as keyof typeof passwordData]}
-                  onChange={(e) => setPasswordData({ ...passwordData, [f.key]: e.target.value })} />
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      [f.key]: e.target.value,
+                    })
+                  }
+                />
               </Grid>
             ))}
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPasswordDialogOpen(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleChangePassword} disabled={submitting}>
+          <Button
+            variant="contained"
+            onClick={handleChangePassword}
+            disabled={submitting}
+          >
             {submitting ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add Document Dialog */}
-      <Dialog open={docDialogOpen} onClose={() => setDocDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={docDialogOpen}
+        onClose={() => setDocDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Thêm tài liệu</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
-          <TextField label="Loại tài liệu *" fullWidth value={docForm.documentType}
-            onChange={(e) => setDocForm({ ...docForm, documentType: e.target.value })} />
-          <TextField label="Tên tài liệu *" fullWidth value={docForm.documentName}
-            onChange={(e) => setDocForm({ ...docForm, documentName: e.target.value })} />
-          <TextField label="Đường dẫn file *" fullWidth value={docForm.filePath}
-            onChange={(e) => setDocForm({ ...docForm, filePath: e.target.value })} />
-          <TextField label="Mô tả" fullWidth multiline rows={2} value={docForm.description}
-            onChange={(e) => setDocForm({ ...docForm, description: e.target.value })} />
+        <DialogContent
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            pt: "16px !important",
+          }}
+        >
+          <TextField
+            label="Loại tài liệu *"
+            fullWidth
+            value={docForm.documentType}
+            onChange={(e) =>
+              setDocForm({ ...docForm, documentType: e.target.value })
+            }
+          />
+          <TextField
+            label="Tên tài liệu *"
+            fullWidth
+            value={docForm.documentName}
+            onChange={(e) =>
+              setDocForm({ ...docForm, documentName: e.target.value })
+            }
+          />
+          <TextField
+            label="Đường dẫn file *"
+            fullWidth
+            value={docForm.filePath}
+            onChange={(e) =>
+              setDocForm({ ...docForm, filePath: e.target.value })
+            }
+          />
+          <TextField
+            label="Mô tả"
+            fullWidth
+            multiline
+            rows={2}
+            value={docForm.description}
+            onChange={(e) =>
+              setDocForm({ ...docForm, description: e.target.value })
+            }
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDocDialogOpen(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleAddDoc}
-            disabled={savingDoc || !docForm.documentType || !docForm.documentName || !docForm.filePath}>
+          <Button
+            variant="contained"
+            onClick={handleAddDoc}
+            disabled={
+              savingDoc ||
+              !docForm.documentType ||
+              !docForm.documentName ||
+              !docForm.filePath
+            }
+          >
             {savingDoc ? <CircularProgress size={20} /> : "Thêm"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add/Edit Contact Dialog */}
-      <Dialog open={contactDialogOpen} onClose={() => setContactDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingContact ? "Chỉnh sửa liên hệ" : "Thêm liên hệ khẩn cấp"}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
-          <TextField label="Họ tên liên hệ *" fullWidth value={contactForm.contactName}
-            onChange={(e) => setContactForm({ ...contactForm, contactName: e.target.value })} />
-          <TextField label="Quan hệ *" fullWidth value={contactForm.relationship}
-            onChange={(e) => setContactForm({ ...contactForm, relationship: e.target.value })} />
-          <TextField label="Số điện thoại *" fullWidth value={contactForm.phone}
-            onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} />
-          <TextField label="Email" fullWidth value={contactForm.email}
-            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} />
-          <TextField label="Địa chỉ" fullWidth value={contactForm.address}
-            onChange={(e) => setContactForm({ ...contactForm, address: e.target.value })} />
+      <Dialog
+        open={contactDialogOpen}
+        onClose={() => setContactDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingContact ? "Chỉnh sửa liên hệ" : "Thêm liên hệ khẩn cấp"}
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            pt: "16px !important",
+          }}
+        >
+          <TextField
+            label="Họ tên liên hệ *"
+            fullWidth
+            value={contactForm.contactName}
+            onChange={(e) =>
+              setContactForm({ ...contactForm, contactName: e.target.value })
+            }
+          />
+          <TextField
+            label="Quan hệ *"
+            fullWidth
+            value={contactForm.relationship}
+            onChange={(e) =>
+              setContactForm({ ...contactForm, relationship: e.target.value })
+            }
+          />
+          <TextField
+            label="Số điện thoại *"
+            fullWidth
+            value={contactForm.phone}
+            onChange={(e) =>
+              setContactForm({ ...contactForm, phone: e.target.value })
+            }
+          />
+          <TextField
+            label="Email"
+            fullWidth
+            value={contactForm.email}
+            onChange={(e) =>
+              setContactForm({ ...contactForm, email: e.target.value })
+            }
+          />
+          <TextField
+            label="Địa chỉ"
+            fullWidth
+            value={contactForm.address}
+            onChange={(e) =>
+              setContactForm({ ...contactForm, address: e.target.value })
+            }
+          />
           <FormControlLabel
-            control={<Switch checked={contactForm.isPrimary} onChange={(e) => setContactForm({ ...contactForm, isPrimary: e.target.checked })} />}
+            control={
+              <Switch
+                checked={contactForm.isPrimary}
+                onChange={(e) =>
+                  setContactForm({
+                    ...contactForm,
+                    isPrimary: e.target.checked,
+                  })
+                }
+              />
+            }
             label="Đặt làm liên hệ chính"
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setContactDialogOpen(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleSaveContact}
-            disabled={savingContact || !contactForm.contactName || !contactForm.relationship || !contactForm.phone}>
+          <Button
+            variant="contained"
+            onClick={handleSaveContact}
+            disabled={
+              savingContact ||
+              !contactForm.contactName ||
+              !contactForm.relationship ||
+              !contactForm.phone
+            }
+          >
             {savingContact ? <CircularProgress size={20} /> : "Lưu"}
           </Button>
         </DialogActions>

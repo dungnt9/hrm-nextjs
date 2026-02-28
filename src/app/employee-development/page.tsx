@@ -185,6 +185,7 @@ export default function EmployeeDevelopmentPage() {
       }
     } catch (error) {
       console.error("Failed to fetch employees:", error);
+      setError("Failed to load employee list. Please refresh the page.");
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +242,7 @@ export default function EmployeeDevelopmentPage() {
       }
     } catch (error) {
       console.error("Failed to fetch employee development data:", error);
+      setError("Failed to load employee development data. Please try again.");
     } finally {
       setIsLoading(false);
     }
